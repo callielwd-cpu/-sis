@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas de Boas-Vindas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        /* 🎨 NOVO: Carregamento da Fonte Personalizada */
+        @font-face {
+            font-family: 'TTRuns';
+            src: url('TT Runs Trial ExtraBold.ttf') format('truetype');
+            font-weight: 900;
+            font-style: normal;
+            font-display: swap; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1F2937;
+            /* Padrão em mobile: itens empilhados (flex-direction: column) */
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* ⚠️ Novo: Regra para telas grandes (PC) */
+        @media (min-width: 768px) { /* md breakpoint do Tailwind */
+            body {
+                flex-direction: row;
+                align-items: flex-start; /* Alinha blocos ao topo */
+                justify-content: center; /* Centraliza o conjunto de blocos */
+                gap: 2rem; /* Tailwind: gap-8 */
+            }
+        }
+        
+        /* ⚠️ Novo: Classe aplicada via JS no primeiro arrasto para permitir mover o card */
+        .canvas-moved {
+            position: absolute !important;
+            transform: none !important; 
+            /* 💡 CORREÇÃO APLICADA: Deixa o Canvas por cima de tudo ao ser movido/arrastado */
+            z-index: 50 !important; 
+        }
+
+        #welcomeCanvas {
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            height: auto;
+            cursor: default; 
+            z-index: 10;
+        }
+        
+        /* Cursors para elementos internos arrastáveis */
+        #welcomeCanvas.draggable {
+            cursor: move; 
+        }
+        /* Cursors para arrastar o Canvas inteiro (área vazia) */
+        #welcomeCanvas.canvas-draggable {
+             cursor: grab;
+        }
+        /* Cursor enquanto está arrastando */
+        #welcomeCanvas.dragging {
+            cursor: grabbing;
+        }
+        
+        .container {
+            width: 100%;
+            /* Em PC, a largura é fixa. Em Mobile, ele usa 100% da área disponível */
+            max-width: 450px; 
+            z-index: 20; /* Z-index maior que o Canvas padrão (10) */
+            background-color: #1F2937; 
+            padding-bottom: 20px;
+        }
+        
+        /* Estilos de inputs (mantidos) */
+        .input-group {
+             margin-bottom: 10px;
+        }
+        .color-control {
+            display: flex;
+            align-items: center;
+        }
+        .color-input-hex {
+            width: 80px;
+            text-align: center;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+        .color-picker {
+            width: 100%;
+            height: 40px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #5865F2;
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -8px;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #5865F2;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"] {
+            height: 4px;
+            background: #4F545C;
+        }
+    </style>
+</head>
+<body class="md:flex md:flex-row md:items-start md:justify-center md:gap-8"> 
+
+<div class="container bg-gray-800 p-6 rounded-lg shadow-xl mb-6">
+    <h1 class="text-2xl font-bold text-white mb-4">Gerador de Canvas de Boas-Vindas</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div class="input-group">
+            <label for="userPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Usuário:</label>
+            <input type="text" id="userPicUrlInput" value="https://placehold.co/200x200/43B581/000000?text=USER" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500" oninput="updateCanvas()">
+        </div>
+        <div class="input-group">
+            <label for="groupPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Grupo:</label>
+            <input type="text" id="groupPicUrlInput" value="https://placehold.co/100x100/ED4245/FFFFFF?text=GRUPO" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500" oninput="updateCanvas()">
+        </div>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="bgUrlInput" class="block text-gray-300 mb-1">URL do Plano de Fundo (Opcional):</label>
+            <input type="text" id="bgUrlInput" value="https://images.unsplash.com/photo-1550511520-21a1f599f65c?q=80&w=1500&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500" oninput="updateCanvas()">
+        </div>
+        <div>
+            <label for="bgColorInput" class="block text-gray-300 mb-1">Cor Sólida de Fundo:</label>
+            <div class="color-control">
+                <input type="color" id="bgColorInput" value="#36393F" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
+                <input type="text" id="bgColorHex" value="#36393F" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'bgColorInput'); updateCanvas()">
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4 border-t pt-4 border-gray-700">
+        <h2 class="text-xl font-bold text-purple-400 mb-4">Ajustes de Texto e Cores</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="input-group">
+                <label for="welcomeTextInput" class="block text-gray-300 mb-1">
+                    Texto de Boas-Vindas: 
+                    <span class="text-xs text-blue-400 ml-2">X:<span id="welcomeXValue">450</span> Y:<span id="welcomeYValue">230</span></span>
+                </label>
+                <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white focus:ring-purple-500 focus:border-purple-500" oninput="updateCanvas()">
+            </div>
+            <div class="input-group">
+                <label for="welcomeColorInput" class="block text-gray-300 mb-1">Cor do Texto de Boas-Vindas:</label>
+                 <div class="color-control">
+                    <input type="color" id="welcomeColorInput" value="#FFFFFF" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'welcomeColorHex'); updateCanvas()">
+                    <input type="text" id="welcomeColorHex" value="#FFFFFF" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'welcomeColorInput'); updateCanvas()">
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            <div class="input-group">
+                <label for="groupNameColorInput" class="block text-gray-300 mb-1">Cor do Nome do Grupo:</label>
+                <div class="color-control">
+                    <input type="color" id="groupNameColorInput" value="#FEE75C" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
+                    <input type="text" id="groupNameColorHex" value="#FEE75C" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="idBoxColorInput" class="block text-gray-300 mb-1">
+                    Cor do Box de ID: 
+                    <span class="text-xs text-blue-400 ml-2">X:<span id="idBoxXValue">450</span> Y:<span id="idBoxYValue">310</span></span>
+                </label>
+                <div class="color-control">
+                    <input type="color" id="idBoxColorInput" value="#000000" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
+                    <input type="text" id="idBoxColorHex" value="#000000" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'idBoxColorInput'); updateCanvas()">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mt-6 border-t pt-4 border-gray-700">
+        <h2 class="text-xl font-bold text-blue-400 mb-4">Ajustes de Posição e Tamanho (Canvas 900x350px)</h2>
+
+        <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Texto de Boas-Vindas (Tamanho)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-1">
+                <label for="welcomeFontSize" class="block text-gray-400 text-xs mb-1">Tamanho da Fonte: <span id="welcomeFontSizeValue">50</span>px</label>
+                <input type="range" id="welcomeFontSize" min="20" max="100" value="50" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+        </div>
+        <hr class="mt-4 border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Foto do Usuário (Maior) - Arrastável!</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="userRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="userRadiusValue">66</span>px</label>
+                <input type="range" id="userRadius" min="50" max="150" value="66" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+            <div>
+                <label for="userX" class="block text-gray-400 text-xs mb-1">Posição X: <span id="userXValue">437</span>px</label>
+                <input type="range" id="userX" min="50" max="850" value="437" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+            <div>
+                <label for="userY" class="block text-gray-400 text-xs mb-1">Posição Y: <span id="userYValue">110</span>px</label>
+                <input type="range" id="userY" min="50" max="300" value="110" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-6">Foto do Grupo (Menor) - Arrastável!</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="groupRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="groupRadiusValue">35</span>px</label>
+                <input type="range" id="groupRadius" min="20" max="100" value="35" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+            <div>
+                <label for="groupX" class="block text-gray-400 text-xs mb-1">Posição X: <span id="groupXValue">655</span>px</label>
+                <input type="range" id="groupX" min="20" max="880" value="655" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+            <div>
+                <label for="groupY" class="block text-gray-400 text-xs mb-1">Posição Y: <span id="groupYValue">300</span>px</label>
+                <input type="range" id="groupY" min="20" max="330" value="300" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" oninput="updateCanvas()">
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-500 mt-4">Dica: Arraste o **texto**, a **Caixa de ID** ou as **Fotos** para mover os elementos. Arraste uma **área vazia** do Canvas para movê-lo na tela.</p>
+
+    </div>
+    
+    <button id="exportButton" onclick="exportConfigAsJson()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+        Exportar Configurações (.json)
+    </button>
+    </div>
+
+<canvas id="welcomeCanvas" width="900" height="350" class="shadow-2xl"></canvas>
+
+<script>
+    const FIXED_USER_NAME = 'João_Victor#1234';
+    const FIXED_GROUP_NAME = 'Grup lexi✨';
+    const USER_FALLBACK_COLOR = '#43B581';
+    const GROUP_FALLBACK_COLOR = '#ED4245';
+
+    // 🌟 NOVO: Função para obter a string da fonte dinamicamente
+    const getWelcomeFont = () => {
+        const size = document.getElementById('welcomeFontSize').value;
+        return `900 ${size}px TTRuns, sans-serif`; 
+    }
+    const DEFAULT_FONT = '28px Inter, sans-serif';
+
+    let isDragging = false;
+    let draggedElement = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    let canvasDragOffsetX = 0;
+    let canvasDragOffsetY = 0;
+
+    let state = {
+        userX: 437,
+        userY: 110,
+        groupX: 655,
+        groupY: 300,
+        welcomeX: 450,
+        welcomeY: 230,
+        idBoxX: 450,
+        idBoxY: 310,
+    };
+    
+    function initializeState() {
+        state.userX = parseInt(document.getElementById('userX').value);
+        state.userY = parseInt(document.getElementById('userY').value);
+        state.groupX = parseInt(document.getElementById('groupX').value);
+        state.groupY = parseInt(document.getElementById('groupY').value);
+        state.welcomeX = 450;
+        state.welcomeY = 230;
+        state.idBoxX = 450;
+        state.idBoxY = 310;
+    }
+    
+    const loadImageAsync = (url) => {
+        return new Promise((resolve) => {
+            if (!url || url.trim() === '') return resolve(null);
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => { console.error(`[INFO] Falha ao carregar imagem: ${url}`); resolve(null); };
+            img.src = url;
+        });
+    };
+
+    const drawCircularImage = (ctx, x, y, radius, image, fallbackColor) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+        ctx.fillStyle = fallbackColor;
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
+
+        if (image) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.clip(); 
+
+            const imgWidth = image.width;
+            const imgHeight = image.height;
+            const targetSize = radius * 2; 
+
+            let sx, sy, sWidth, sHeight; 
+            const imgRatio = imgWidth / imgHeight;
+            const targetRatio = 1; 
+
+            if (imgRatio > targetRatio) {
+                sHeight = imgHeight;
+                sWidth = imgHeight * targetRatio; 
+                sx = (imgWidth - sWidth) / 2; 
+                sy = 0;
+            } else {
+                sWidth = imgWidth;
+                sHeight = imgWidth / targetRatio; 
+                sx = 0;
+                sy = (imgHeight - sHeight) / 2; 
+            }
+            
+            const dx = x - radius;
+            const dy = y - radius;
+            const dWidth = targetSize;
+            const dHeight = targetSize;
+
+            ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+            ctx.restore();
+        }
+    };
+
+    function getElementBounds(ctx, config) {
+        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value; 
+        const ID_TEXT = FIXED_USER_NAME;
+        
+        // Foto do Usuário
+        const userAvatarBounds = {
+            x: config.userX,
+            y: config.userY,
+            radius: config.userRadius
+        };
+        
+        // Foto do Grupo
+        const groupAvatarBounds = {
+            x: config.groupX,
+            y: config.groupY,
+            radius: config.groupRadius
+        };
+
+        // Texto de Boas-Vindas
+        const fontSize = document.getElementById('welcomeFontSize').value;
+        ctx.font = getWelcomeFont(); // ⬅️ Usando a função dinâmica
+        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
+        const welcomeWidth = welcomeMetrics.width;
+        const welcomeHeight = parseInt(fontSize); // Usa o valor real do tamanho
+        const welcomeBounds = {
+            x: config.welcomeX - welcomeWidth / 2,
+            y: config.welcomeY - welcomeHeight + 5,
+            width: welcomeWidth,
+            height: welcomeHeight * 1.1
+        };
+
+        // Caixa de ID
+        ctx.font = DEFAULT_FONT;
+        const idMetrics = ctx.measureText(ID_TEXT);
+        const boxPaddingX = 20;
+        const boxPaddingY = 10;
+        const boxWidth = idMetrics.width + boxPaddingX * 2;
+        const boxHeight = 28 + boxPaddingY * 2;
+        const idBoxBounds = {
+            x: config.idBoxX - boxWidth / 2,
+            y: config.idBoxY - boxHeight / 2,
+            width: boxWidth,
+            height: boxHeight
+        };
+        
+        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
+    }
+
+    function hitTest(x, y, bounds) {
+        return x >= bounds.x && x <= bounds.x + bounds.width &&
+               y >= bounds.y && y <= bounds.y + bounds.height;
+    }
+    
+    function hitTestCircle(x, y, circleBounds) {
+        const dx = x - circleBounds.x;
+        const dy = y - circleBounds.y;
+        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
+    }
+
+    function syncColorInputs(sourceInput, targetId) {
+        const targetInput = document.getElementById(targetId);
+        let value = sourceInput.value.toUpperCase();
+
+        if (targetId.includes('Hex')) {
+            if (value.length === 7) {
+                targetInput.value = value;
+            }
+        } else {
+            if (!value.startsWith('#')) {
+                value = '#' + value;
+            }
+            const hexPattern = /^#([0-9A-F]{3}){1,2}$/i;
+            if (hexPattern.test(value)) {
+                targetInput.value = value;
+            }
+        }
+    }
+
+    async function drawWelcomeCanvas(config) {
+        const userPicUrl = document.getElementById('userPicUrlInput').value;
+        const groupPicUrl = document.getElementById('groupPicUrlInput').value;
+        
+        const {
+            bgUrl, bgColor,
+            userRadius, groupRadius
+        } = config;
+        
+        const userX = state.userX;
+        const userY = state.userY;
+        const groupX = state.groupX;
+        const groupY = state.groupY;
+        const welcomeX = state.welcomeX;
+        const welcomeY = state.welcomeY;
+        const idBoxX = state.idBoxX;
+        const idBoxY = state.idBoxY;
+
+        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value; 
+        const WELCOME_COLOR = document.getElementById('welcomeColorInput').value;
+        const GROUP_NAME_COLOR = document.getElementById('groupNameColorInput').value;
+        const ID_BOX_COLOR_BASE = document.getElementById('idBoxColorInput').value;
+        const ID_BOX_COLOR = ID_BOX_COLOR_BASE + "E6"; 
+        
+        const WELCOME_FONT = getWelcomeFont(); // ⬅️ OBTÉM A FONTE DINÂMICA
+
+        const canvas = document.getElementById('welcomeCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        // 🌟 NOVO: Espera o carregamento da nova fonte
+        try {
+            // Carrega apenas a família para o navegador entender. 100px é um tamanho alto para garantir
+            await document.fonts.load(`900 100px TTRuns`); 
+        } catch (error) {
+            console.warn("Falha ao carregar a fonte TTRuns. Usando fallback.");
+        }
+
+        const [bgImage, userPicData, groupPicData] = await Promise.all([
+            loadImageAsync(bgUrl),
+            loadImageAsync(userPicUrl),
+            loadImageAsync(groupPicUrl)
+        ]);
+
+        // 1. Desenhar o Plano de Fundo
+        if (bgImage) {
+            const imgWidth = bgImage.width;
+            const imgHeight = bgImage.height;
+            const canvasRatio = canvasWidth / canvasHeight;
+            const imgRatio = imgWidth / imgHeight;
+            
+            let drawW, drawH, offsetX, offsetY;
+
+            if (imgRatio > canvasRatio) {
+                drawH = canvasHeight;
+                drawW = imgWidth * (canvasHeight / imgHeight);
+                offsetX = (canvasWidth - drawW) / 2; 
+                offsetY = 0;
+            } else {
+                drawW = canvasWidth;
+                drawH = imgHeight * (canvasWidth / imgWidth);
+                offsetX = 0;
+                offsetY = (canvasHeight - drawH) / 2; 
+            }
+
+            ctx.drawImage(bgImage, offsetX, offsetY, drawW, drawH);
+        }
+        else { 
+            ctx.fillStyle = bgColor; 
+            ctx.fillRect(0,0,canvasWidth,canvasHeight); 
+        }
+
+        // Desenhos decorativos
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.beginPath();
+        ctx.arc(canvasWidth * 0.1, canvasHeight * 0.9, 100, 0, Math.PI * 2);
+        ctx.arc(canvasWidth * 0.9, canvasHeight * 0.1, 70, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Desenhar Fotos do Usuário e do Grupo
+        drawCircularImage(ctx, userX, userY, userRadius, userPicData, USER_FALLBACK_COLOR);
+        drawCircularImage(ctx, groupX, groupY, groupRadius, groupPicData, GROUP_FALLBACK_COLOR);
+
+        // Texto do Grupo
+        const X_GROUP_NAME = groupX + groupRadius + 15;
+        const Y_GROUP_NAME = groupY + 10;
+        ctx.font = 'bold 30px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = GROUP_NAME_COLOR;
+        ctx.fillText(FIXED_GROUP_NAME, X_GROUP_NAME, Y_GROUP_NAME);
+
+        // Texto de Boas-Vindas
+        ctx.font = WELCOME_FONT; // ⬅️ APLICAÇÃO DA FONTE COM TAMANHO AJUSTÁVEL
+        ctx.textAlign = 'center';
+        ctx.fillStyle = WELCOME_COLOR;
+        ctx.fillText(WELCOME_TEXT, welcomeX, welcomeY);
+
+        // Caixa de ID
+        const ID_TEXT = FIXED_USER_NAME;
+        ctx.font = DEFAULT_FONT;
+        const textMetrics = ctx.measureText(ID_TEXT);
+        const boxPaddingX = 20;
+        const boxPaddingY = 10;
+        const boxWidth = textMetrics.width + boxPaddingX * 2;
+        const boxHeight = 28 + boxPaddingY * 2;
+        const boxX = idBoxX - boxWidth / 2;
+        const boxY = idBoxY - boxHeight / 2;
+        const borderRadius = 8;
+
+        ctx.fillStyle = ID_BOX_COLOR;
+        ctx.beginPath();
+        ctx.moveTo(boxX + borderRadius, boxY);
+        ctx.lineTo(boxX + boxWidth - borderRadius, boxY);
+        ctx.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + borderRadius, borderRadius);
+        ctx.lineTo(boxX + boxWidth, boxY + boxHeight - borderRadius);
+        ctx.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - borderRadius, boxY + boxHeight, borderRadius);
+        ctx.lineTo(boxX + borderRadius, boxY + boxHeight);
+        ctx.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - borderRadius, borderRadius);
+        ctx.lineTo(boxX, boxY + borderRadius);
+        ctx.arcTo(boxX, boxY, boxX + borderRadius, boxY, borderRadius);
+        ctx.fill();
+
+        // Texto do ID
+        const textBaselineY = idBoxY + (28 / 2) - 2;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.font = DEFAULT_FONT;
+        ctx.fillText(ID_TEXT, idBoxX, textBaselineY);
+    }
+    
+    function getCurrentConfig() {
+        return {
+            bgUrl: document.getElementById('bgUrlInput').value,
+            
+            bgColor: document.getElementById('bgColorInput').value,
+            welcomeText: document.getElementById('welcomeTextInput').value,
+            welcomeColor: document.getElementById('welcomeColorInput').value,
+            groupNameColor: document.getElementById('groupNameColorInput').value,
+            idBoxColor: document.getElementById('idBoxColorInput').value,
+            
+            userRadius: parseInt(document.getElementById('userRadius').value),
+            groupRadius: parseInt(document.getElementById('groupRadius').value),
+
+            // 🆕 Novo valor de exportação
+            welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
+            
+            userX: state.userX,
+            userY: state.userY,
+            groupX: state.groupX,
+            groupY: state.groupY,
+            welcomeX: state.welcomeX,
+            welcomeY: state.welcomeY,
+            idBoxX: state.idBoxX,
+            idBoxY: state.idBoxY,
+        };
+    }
+
+    function updateCanvas() {
+        state.userX = parseInt(document.getElementById('userX').value);
+        state.userY = parseInt(document.getElementById('userY').value);
+        state.groupX = parseInt(document.getElementById('groupX').value);
+        state.groupY = parseInt(document.getElementById('groupY').value);
+        
+        syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
+        syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
+        syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
+        syncColorInputs(document.getElementById('idBoxColorInput'), 'idBoxColorHex');
+
+        document.getElementById('userRadiusValue').textContent = document.getElementById('userRadius').value;
+        document.getElementById('userXValue').textContent = Math.round(state.userX);
+        document.getElementById('userYValue').textContent = Math.round(state.userY);
+        document.getElementById('groupRadiusValue').textContent = document.getElementById('groupRadius').value;
+        document.getElementById('groupXValue').textContent = Math.round(state.groupX);
+        document.getElementById('groupYValue').textContent = Math.round(state.groupY);
+        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
+        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
+        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
+        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
+        
+        // 🆕 Atualiza o display do valor do novo range
+        document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
+
+        drawWelcomeCanvas(getCurrentConfig());
+    }
+    
+    function updateRangeFromState(elementId, value) {
+        const range = document.getElementById(elementId);
+        range.value = Math.round(value);
+    }
+
+    function exportConfigAsJson() {
+        const config = getCurrentConfig();
+        const jsonString = JSON.stringify(config, null, 2); 
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `canvas_config_${Date.now()}.json`;
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function getCursorTarget(mouseX, mouseY, bounds) {
+        if (hitTest(mouseX, mouseY, bounds.welcome) || hitTest(mouseX, mouseY, bounds.idbox) ||
+            hitTestCircle(mouseX, mouseY, bounds.userAvatar) || hitTestCircle(mouseX, mouseY, bounds.groupAvatar)) {
+            return 'element-draggable'; 
+        }
+        return 'canvas-draggable'; 
+    }
+
+    function handleInteractionStart(e, clientX, clientY) {
+        const canvas = document.getElementById('welcomeCanvas');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        
+        const mouseCanvasX = clientX - rect.left;
+        const mouseCanvasY = clientY - rect.top;
+        const bounds = getElementBounds(ctx, getCurrentConfig());
+        
+        // Prioridade de arrasto
+        if (hitTestCircle(mouseCanvasX, mouseCanvasY, bounds.userAvatar)) {
+            draggedElement = 'userAvatar';
+            dragOffsetX = mouseCanvasX - state.userX;
+            dragOffsetY = mouseCanvasY - state.userY;
+        } else if (hitTestCircle(mouseCanvasX, mouseCanvasY, bounds.groupAvatar)) {
+            draggedElement = 'groupAvatar';
+            dragOffsetX = mouseCanvasX - state.groupX;
+            dragOffsetY = mouseCanvasY - state.groupY;
+        } else if (hitTest(mouseCanvasX, mouseCanvasY, bounds.welcome)) {
+            draggedElement = 'welcome';
+            dragOffsetX = mouseCanvasX - state.welcomeX;
+            dragOffsetY = mouseCanvasY - state.welcomeY;
+        } else if (hitTest(mouseCanvasX, mouseCanvasY, bounds.idbox)) {
+            draggedElement = 'idbox';
+            dragOffsetX = mouseCanvasX - state.idBoxX;
+            dragOffsetY = mouseCanvasY - state.idBoxY;
+        } else {
+            draggedElement = 'canvas';
+            canvasDragOffsetX = clientX - rect.left;
+            canvasDragOffsetY = clientY - rect.top;
+        }
+
+        if (draggedElement) {
+            isDragging = true;
+            canvas.classList.add('dragging'); 
+        }
+    }
+
+    function handleInteractionMove(clientX, clientY) {
+        const canvas = document.getElementById('welcomeCanvas');
+        const rect = canvas.getBoundingClientRect();
+        
+        const mouseX = clientX - rect.left;
+        const mouseY = clientY - rect.top;
+        
+        const currentConfig = getCurrentConfig();
+        const bounds = getElementBounds(canvas.getContext('2d'), currentConfig);
+        
+        // 1. Atualiza o cursor quando NÃO estiver arrastando
+        if (!isDragging) {
+            const cursorTarget = getCursorTarget(mouseX, mouseY, bounds);
+            if (cursorTarget === 'element-draggable') {
+                canvas.classList.remove('canvas-draggable');
+                canvas.classList.add('draggable');
+            } else if (cursorTarget === 'canvas-draggable') {
+                 canvas.classList.remove('draggable');
+                 canvas.classList.add('canvas-draggable');
+            } else {
+                canvas.classList.remove('draggable');
+                canvas.classList.remove('canvas-draggable');
+            }
+            return; 
+        }
+        
+        // 2. Lógica de ARRASTO
+        if (draggedElement === 'canvas') {
+            
+            if (!canvas.classList.contains('canvas-moved')) {
+                canvas.classList.add('canvas-moved');
+                
+                const currentTop = rect.top + window.scrollY;
+                const currentLeft = rect.left + window.scrollX;
+                
+                canvas.style.left = `${currentLeft}px`;
+                canvas.style.top = `${currentTop}px`;
+                canvas.style.margin = '0'; 
+            }
+            
+            const newLeft = clientX - canvasDragOffsetX;
+            const newTop = clientY - canvasDragOffsetY;
+            
+            canvas.style.left = `${newLeft}px`;
+            canvas.style.top = `${newTop}px`;
+            
+        } else if (draggedElement) {
+            // Mover ELEMENTOS INTERNOS
+            let newX = mouseX - dragOffsetX;
+            let newY = mouseY - dragOffsetY;
+            
+            let marginX = 50;
+            let marginY = 50;
+            
+            if (draggedElement === 'userAvatar') {
+                marginX = currentConfig.userRadius;
+                marginY = currentConfig.userRadius;
+                state.userX = Math.max(marginX, Math.min(canvas.width - marginX, newX));
+                state.userY = Math.max(marginY, Math.min(canvas.height - marginY, newY));
+                updateRangeFromState('userX', state.userX);
+                updateRangeFromState('userY', state.userY);
+            } else if (draggedElement === 'groupAvatar') {
+                marginX = currentConfig.groupRadius;
+                marginY = currentConfig.groupRadius;
+                state.groupX = Math.max(marginX, Math.min(canvas.width - marginX, newX));
+                state.groupY = Math.max(marginY, Math.min(canvas.height - marginY, newY));
+                updateRangeFromState('groupX', state.groupX);
+                updateRangeFromState('groupY', state.groupY);
+            } else if (draggedElement === 'welcome') { 
+                state.welcomeX = Math.max(bounds.welcome.width / 2, Math.min(canvas.width - bounds.welcome.width / 2, newX));
+                state.welcomeY = Math.max(bounds.welcome.height, Math.min(canvas.height - 20, newY));
+            } else if (draggedElement === 'idbox') { 
+                state.idBoxX = Math.max(bounds.idbox.width / 2, Math.min(canvas.width - bounds.idbox.width / 2, newX));
+                state.idBoxY = Math.max(bounds.idbox.height / 2, Math.min(canvas.height - bounds.idbox.height / 2, newY));
+            }
+            
+            updateCanvas();
+        }
+    }
+
+    function handleInteractionEnd() { 
+        isDragging = false; 
+        draggedElement = null; 
+        const canvas = document.getElementById('welcomeCanvas');
+        canvas.classList.remove('dragging', 'draggable', 'canvas-draggable');
+        updateCanvas(); 
+    }
+
+    function handleMouseDown(e) { if (e.button !== 0) return; handleInteractionStart(e, e.clientX, e.clientY); }
+    function handleMouseMove(e) { handleInteractionMove(e.clientX, e.clientY); }
+    function handleMouseUp() { handleInteractionEnd(); }
+
+    function handleTouchStart(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY); }
+    function handleTouchMove(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY); }
+    function handleTouchEnd() { handleInteractionEnd(); }
+
+    window.onload = () => {
+        initializeState();
+        const canvas = document.getElementById('welcomeCanvas');
+        
+        canvas.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        canvas.addEventListener('mousemove', handleMouseMove); 
+        
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+        
+        updateCanvas();
+    };
+</script>
+</body>
+</html>
