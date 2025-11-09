@@ -252,7 +252,6 @@
     const USER_FALLBACK_COLOR = '#43B581';
     const GROUP_FALLBACK_COLOR = '#ED4245';
 
-    // 🌟 NOVO: Função para obter a string da fonte dinamicamente
     const getWelcomeFont = () => {
         const size = document.getElementById('welcomeFontSize').value;
         return `900 ${size}px TTRuns, sans-serif`; 
@@ -366,10 +365,10 @@
 
         // Texto de Boas-Vindas
         const fontSize = document.getElementById('welcomeFontSize').value;
-        ctx.font = getWelcomeFont(); // ⬅️ Usando a função dinâmica
+        ctx.font = getWelcomeFont(); 
         const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
         const welcomeWidth = welcomeMetrics.width;
-        const welcomeHeight = parseInt(fontSize); // Usa o valor real do tamanho
+        const welcomeHeight = parseInt(fontSize); 
         const welcomeBounds = {
             x: config.welcomeX - welcomeWidth / 2,
             y: config.welcomeY - welcomeHeight + 5,
@@ -448,16 +447,14 @@
         const ID_BOX_COLOR_BASE = document.getElementById('idBoxColorInput').value;
         const ID_BOX_COLOR = ID_BOX_COLOR_BASE + "E6"; 
         
-        const WELCOME_FONT = getWelcomeFont(); // ⬅️ OBTÉM A FONTE DINÂMICA
+        const WELCOME_FONT = getWelcomeFont(); 
 
         const canvas = document.getElementById('welcomeCanvas');
         const ctx = canvas.getContext('2d');
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
 
-        // 🌟 NOVO: Espera o carregamento da nova fonte
         try {
-            // Carrega apenas a família para o navegador entender. 100px é um tamanho alto para garantir
             await document.fonts.load(`900 100px TTRuns`); 
         } catch (error) {
             console.warn("Falha ao carregar a fonte TTRuns. Usando fallback.");
@@ -517,7 +514,7 @@
         ctx.fillText(FIXED_GROUP_NAME, X_GROUP_NAME, Y_GROUP_NAME);
 
         // Texto de Boas-Vindas
-        ctx.font = WELCOME_FONT; // ⬅️ APLICAÇÃO DA FONTE COM TAMANHO AJUSTÁVEL
+        ctx.font = WELCOME_FONT; 
         ctx.textAlign = 'center';
         ctx.fillStyle = WELCOME_COLOR;
         ctx.fillText(WELCOME_TEXT, welcomeX, welcomeY);
@@ -567,8 +564,6 @@
             
             userRadius: parseInt(document.getElementById('userRadius').value),
             groupRadius: parseInt(document.getElementById('groupRadius').value),
-
-            // 🆕 Novo valor de exportação
             welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
             
             userX: state.userX,
@@ -603,8 +598,6 @@
         document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
         document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
         document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-        
-        // 🆕 Atualiza o display do valor do novo range
         document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
 
         drawWelcomeCanvas(getCurrentConfig());
@@ -644,11 +637,14 @@
         const ctx = canvas.getContext('2d');
         const rect = canvas.getBoundingClientRect();
         
+        // Mapeia coordenadas do clique/toque para o Canvas
         const mouseCanvasX = clientX - rect.left;
         const mouseCanvasY = clientY - rect.top;
         const bounds = getElementBounds(ctx, getCurrentConfig());
         
-        // Prioridade de arrasto
+        draggedElement = null; // Reinicia o elemento arrastado
+        
+        // 1. Prioridade de arrasto (Avatar > Texto/Box > Canvas)
         if (hitTestCircle(mouseCanvasX, mouseCanvasY, bounds.userAvatar)) {
             draggedElement = 'userAvatar';
             dragOffsetX = mouseCanvasX - state.userX;
@@ -666,6 +662,7 @@
             dragOffsetX = mouseCanvasX - state.idBoxX;
             dragOffsetY = mouseCanvasY - state.idBoxY;
         } else {
+            // Se não acertou um elemento, move o canvas
             draggedElement = 'canvas';
             canvasDragOffsetX = clientX - rect.left;
             canvasDragOffsetY = clientY - rect.top;
@@ -687,7 +684,7 @@
         const currentConfig = getCurrentConfig();
         const bounds = getElementBounds(canvas.getContext('2d'), currentConfig);
         
-        // 1. Atualiza o cursor quando NÃO estiver arrastando
+        // 1. Atualiza o cursor (apenas para mouse/PC)
         if (!isDragging) {
             const cursorTarget = getCursorTarget(mouseX, mouseY, bounds);
             if (cursorTarget === 'element-draggable') {
@@ -707,6 +704,7 @@
         if (draggedElement === 'canvas') {
             
             if (!canvas.classList.contains('canvas-moved')) {
+                // Prepara o canvas para ser movido pela tela
                 canvas.classList.add('canvas-moved');
                 
                 const currentTop = rect.top + window.scrollY;
@@ -765,30 +763,63 @@
         updateCanvas(); 
     }
 
-    function handleMouseDown(e) { if (e.button !== 0) return; handleInteractionStart(e, e.clientX, e.clientY); }
-    function handleMouseMove(e) { handleInteractionMove(e.clientX, e.clientY); }
-    function handleMouseUp() { handleInteractionEnd(); }
+    // --- MOUSE EVENTS (PC) ---
 
-    function handleTouchStart(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY); }
-    function handleTouchMove(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY); }
-    function handleTouchEnd() { handleInteractionEnd(); }
+    function handleMouseDown(e) { 
+        if (e.button !== 0) return; 
+        handleInteractionStart(e, e.clientX, e.clientY); 
+    }
+    function handleMouseMove(e) { 
+        handleInteractionMove(e.clientX, e.clientY); 
+    }
+    function handleMouseUp() { 
+        handleInteractionEnd(); 
+    }
+
+    // --- TOUCH EVENTS (MOBILE) ---
+
+    function handleTouchStart(e) { 
+        if (e.touches.length > 1) return; 
+        // Chama a lógica de início de interação
+        handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY); 
+        
+        // ⚠️ NOVO: Se o arrasto começar em um elemento ou no canvas, previne o scroll da página.
+        if (draggedElement) {
+             e.preventDefault(); 
+        }
+    }
+    
+    function handleTouchMove(e) { 
+        if (e.touches.length > 1 || !isDragging) return; 
+        // ⚠️ NOVO: Garante que o scroll seja prevenido APENAS se estiver arrastando.
+        e.preventDefault(); 
+        handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY); 
+    }
+    
+    function handleTouchEnd() { 
+        handleInteractionEnd(); 
+    }
+
+    // --- INICIALIZAÇÃO ---
 
     window.onload = () => {
         initializeState();
         const canvas = document.getElementById('welcomeCanvas');
         
+        // Mouse Listeners (PC)
         canvas.addEventListener('mousedown', handleMouseDown);
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
+        // Otimização para cursor no PC (hover)
         canvas.addEventListener('mousemove', handleMouseMove); 
         
+        // Touch Listeners (Mobile)
+        // O 'passive: false' é crucial para permitir o uso de e.preventDefault()
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
         document.addEventListener('touchend', handleTouchEnd);
         
         updateCanvas();
     };
 </script>
-</body>
-</html>
