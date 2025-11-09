@@ -89,6 +89,13 @@
         .block-select { width: 100%; padding: .5rem; border-radius: .5rem; background: #111827; color: #fff; border: 1px solid #374151; }
         .panel { display: none; }
         .panel.active { display: block; }
+        .summary-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 8px 0; 
+            border-bottom: 1px dashed #374151;
+        }
+        .summary-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body class="md:flex md:flex-row md:items-start md:justify-center md:gap-8">
@@ -96,26 +103,24 @@
 <div class="container bg-gray-800 p-6 rounded-lg shadow-xl mb-6">
     <h1 class="text-2xl font-bold text-white mb-4">Gerador de Canvas de Boas-Vindas</h1>
 
-    <!-- SELECT PARA NAVEGAR ENTRE OS BLOCOS -->
     <div class="mb-4">
         <label for="panelSelect" class="block text-gray-300 mb-2">Selecionar bloco de ajustes:</label>
         <select id="panelSelect" class="block-select" onchange="onPanelChange()">
-            <option value="panel-background">Fundo</option>
-            <option value="panel-text">Texto & Cores</option>
-            <option value="panel-position">Posição & Tamanho</option>
-        </select>
+            <option value="panel-background">Background 🖼️</option>
+            <option value="panel-text">Texto & Cores 🎨</option>
+            <option value="panel-position">Posição & Tamanho ⚙️</option>
+            <option value="panel-summary">Resumo dos Ajustes 📋</option> </select>
     </div>
 
-    <!-- PAINÉIS (agora trocáveis via select) -->
     <div id="panel-background" class="panel active">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div class="input-group">
                 <label for="userPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Usuário:</label>
-                <input type="text" id="userPicUrlInput" value="https://placehold.co/200x200/43B581/000000?text=USER" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <input type="text" id="userPicUrlInput" value="https://i.ibb.co/yFhsWR4v/lua.gif" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
             </div>
             <div class="input-group">
                 <label for="groupPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Grupo:</label>
-                <input type="text" id="groupPicUrlInput" value="https://placehold.co/100x100/ED4245/FFFFFF?text=GRUPO" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/CKWjkPWy/si.jpg" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
             </div>
         </div>
 
@@ -127,7 +132,7 @@
             <div>
                 <label for="bgColorInput" class="block text-gray-300 mb-1">Cor Sólida de Fundo:</label>
                 <div class="color-control">
-                    <input type="color" id="bgColorInput" value="#36393F" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
+                    <input type="color" id="bgColorInput" value="#0B1323" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
                     <input type="text" id="bgColorHex" value="#36393F" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'bgColorInput'); updateCanvas()">
                 </div>
             </div>
@@ -159,8 +164,8 @@
                 <div class="input-group">
                     <label for="groupNameColorInput" class="block text-gray-300 mb-1">Cor do Nome do Grupo:</label>
                     <div class="color-control">
-                        <input type="color" id="groupNameColorInput" value="#FEE75C" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
-                        <input type="text" id="groupNameColorHex" value="#FEE75C" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
+                        <input type="color" id="groupNameColorInput" value="#FFD900" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
+                        <input type="text" id="groupNameColorHex" value="#FFD900" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
                     </div>
                 </div>
                 <div class="input-group">
@@ -169,7 +174,7 @@
                         <span class="text-xs text-blue-400 ml-2">X:<span id="idBoxXValue">450</span> Y:<span id="idBoxYValue">310</span></span>
                     </label>
                     <div class="color-control">
-                        <input type="color" id="idBoxColorInput" value="#000000" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
+                        <input type="color" id="idBoxColorInput" value="#454545" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
                         <input type="text" id="idBoxColorHex" value="#000000" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'idBoxColorInput'); updateCanvas()">
                     </div>
                 </div>
@@ -226,7 +231,16 @@
             <p class="text-sm text-gray-500 mt-4">Dica: Arraste o <strong>texto</strong>, a <strong>Caixa de ID</strong> ou as <strong>Fotos</strong> para mover os elementos. Em dispositivos touch, o canvas NÃO se move ao arrastar a área vazia.</p>
         </div>
     </div>
-
+    
+    <div id="panel-summary" class="panel">
+        <div class="mt-6 border-t pt-4 border-gray-700">
+            <h2 class="text-xl font-bold text-green-400 mb-4">Resumo dos Ajustes (Canvas 900x350px)</h2>
+            <div id="summary-content" class="text-sm text-gray-200 bg-gray-700 p-4 rounded-lg">
+                Carregando resumo...
+            </div>
+            <p class="text-xs text-gray-500 mt-4">Os valores de cor e URL são exibidos como foram configurados. As posições são coordenadas (X, Y).</p>
+        </div>
+    </div>
     <div class="mt-4 flex gap-2">
         <button id="exportButton" onclick="exportConfigAsJson()" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
         <button onclick="saveSelectedPanelToStorage()" class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
@@ -502,14 +516,14 @@
             userRadius: parseInt(document.getElementById('userRadius').value),
             groupRadius: parseInt(document.getElementById('groupRadius').value),
             welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
-            userX: state.userX,
-            userY: state.userY,
-            groupX: state.groupX,
-            groupY: state.groupY,
-            welcomeX: state.welcomeX,
-            welcomeY: state.welcomeY,
-            idBoxX: state.idBoxX,
-            idBoxY: state.idBoxY
+            userX: Math.round(state.userX),
+            userY: Math.round(state.userY),
+            groupX: Math.round(state.groupX),
+            groupY: Math.round(state.groupY),
+            welcomeX: Math.round(state.welcomeX),
+            welcomeY: Math.round(state.welcomeY),
+            idBoxX: Math.round(state.idBoxX),
+            idBoxY: Math.round(state.idBoxY)
         };
     }
 
@@ -536,8 +550,102 @@
         document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
 
         document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
+        
+        // Atualiza o resumo (se o painel estiver ativo)
+        const activePanelId = document.getElementById('panelSelect').value;
+        if (activePanelId === 'panel-summary') {
+            updateSummaryPanel();
+        }
 
         drawWelcomeCanvas(getCurrentConfig());
+    }
+
+    // --- FUNÇÃO PARA GERAR O NOVO PAINEL DE RESUMO ---
+    function updateSummaryPanel() {
+        const config = getCurrentConfig();
+        const summaryDiv = document.getElementById('summary-content');
+        
+        let html = '';
+
+        const summaryData = [
+            { label: 'Cor de Fundo', value: config.bgColor, isColor: true },
+            { label: 'URL de Fundo', value: config.bgUrl, isURL: true },
+            { label: '--- Fotos ---', value: '' },
+            { label: 'Foto do Usuário (URL)', value: document.getElementById('userPicUrlInput').value, isURL: true },
+            { label: 'Foto do Usuário (Raio)', value: `${config.userRadius}px` },
+            { label: 'Foto do Usuário (Posição)', value: `(${config.userX}, ${config.userY})` },
+            { label: 'Foto do Grupo (URL)', value: document.getElementById('groupPicUrlInput').value, isURL: true },
+            { label: 'Foto do Grupo (Raio)', value: `${config.groupRadius}px` },
+            { label: 'Foto do Grupo (Posição)', value: `(${config.groupX}, ${config.groupY})` },
+            { label: '--- Texto ---', value: '' },
+            { label: 'Texto de Boas-Vindas', value: config.welcomeText },
+            { label: 'Cor do Texto B-V', value: config.welcomeColor, isColor: true },
+            { label: 'Tam. do Texto B-V', value: `${config.welcomeFontSize}px` },
+            { label: 'Pos. do Texto B-V', value: `(${config.welcomeX}, ${config.welcomeY})` },
+            { label: 'Cor do Nome do Grupo', value: config.groupNameColor, isColor: true },
+            { label: 'Cor do Box de ID', value: config.idBoxColor, isColor: true },
+            { label: 'Posição do Box de ID', value: `(${config.idBoxX}, ${config.idBoxY})` }
+        ];
+
+        summaryData.forEach(item => {
+            if (item.label.startsWith('---')) {
+                html += `<div class="text-center font-bold text-lg mt-3 mb-1 text-yellow-300">${item.label.replace(/^-+\s*/, '').replace(/\s*-+$/, '')}</div>`;
+            } else {
+                let valueDisplay;
+                if (item.isColor) {
+                    valueDisplay = `<span style="background-color:${item.value}; border: 1px solid #4B5563;" class="inline-block w-4 h-4 rounded-full mr-2"></span>${item.value}`;
+                } else if (item.isURL) {
+                    // Trunca a URL para exibição
+                    valueDisplay = item.value.length > 50 ? item.value.substring(0, 47) + '...' : item.value;
+                } else {
+                    valueDisplay = item.value;
+                }
+                
+                html += `
+                    <div class="summary-item">
+                        <span class="text-gray-400">${item.label}:</span>
+                        <span class="text-white font-medium break-all text-right">${valueDisplay}</span>
+                    </div>
+                `;
+            }
+        });
+
+        summaryDiv.innerHTML = html;
+    }
+    // --- FIM DA FUNÇÃO DE RESUMO ---
+
+    function onPanelChange() {
+        const selectedId = document.getElementById('panelSelect').value;
+        document.querySelectorAll('.panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+        document.getElementById(selectedId).classList.add('active');
+        
+        // Se o painel de resumo for selecionado, atualize seu conteúdo
+        if (selectedId === 'panel-summary') {
+            updateSummaryPanel();
+        }
+
+        // Tenta restaurar a última aba salva
+        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedId);
+    }
+    
+    function loadSelectedPanel() {
+        const lastPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY);
+        if (lastPanelId && document.getElementById(lastPanelId)) {
+            document.getElementById('panelSelect').value = lastPanelId;
+            onPanelChange();
+        } else {
+            // Garante que o painel default (background) esteja ativo
+            document.getElementById('panel-background').classList.add('active');
+            document.getElementById('panelSelect').value = 'panel-background';
+        }
+    }
+
+    function saveSelectedPanelToStorage() {
+        const currentPanelId = document.getElementById('panelSelect').value;
+        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, currentPanelId);
+        alert(`Aba '${document.querySelector(`#panelSelect option[value='${currentPanelId}']`).textContent.trim()}' salva como preferência inicial!`);
     }
 
     function updateRangeFromState(elementId, value) {
@@ -652,27 +760,35 @@
             let newY = mouseY - dragOffsetY;
 
             let marginX = 50, marginY = 50;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
 
             if (draggedElement === 'userAvatar') {
                 marginX = currentConfig.userRadius;
                 marginY = currentConfig.userRadius;
-                state.userX = Math.max(marginX, Math.min(canvas.width - marginX, newX));
-                state.userY = Math.max(marginY, Math.min(canvas.height - marginY, newY));
+                state.userX = Math.max(marginX, Math.min(canvasWidth - marginX, newX));
+                state.userY = Math.max(marginY, Math.min(canvasHeight - marginY, newY));
                 updateRangeFromState('userX', state.userX);
                 updateRangeFromState('userY', state.userY);
             } else if (draggedElement === 'groupAvatar') {
                 marginX = currentConfig.groupRadius;
                 marginY = currentConfig.groupRadius;
-                state.groupX = Math.max(marginX, Math.min(canvas.width - marginX, newX));
-                state.groupY = Math.max(marginY, Math.min(canvas.height - marginY, newY));
+                state.groupX = Math.max(marginX, Math.min(canvasWidth - marginX, newX));
+                state.groupY = Math.max(marginY, Math.min(canvasHeight - marginY, newY));
                 updateRangeFromState('groupX', state.groupX);
                 updateRangeFromState('groupY', state.groupY);
             } else if (draggedElement === 'welcome') {
-                state.welcomeX = Math.max(bounds.welcome.width / 2, Math.min(canvas.width - bounds.welcome.width / 2, newX));
-                state.welcomeY = Math.max(bounds.welcome.height, Math.min(canvas.height - 20, newY));
+                // Margens para o texto de boas-vindas
+                const welcomeWidth = bounds.welcome.width;
+                const welcomeHeight = bounds.welcome.height;
+                state.welcomeX = Math.max(welcomeWidth / 2, Math.min(canvasWidth - welcomeWidth / 2, newX));
+                state.welcomeY = Math.max(welcomeHeight, Math.min(canvasHeight - 10, newY)); 
             } else if (draggedElement === 'idbox') {
-                state.idBoxX = Math.max(bounds.idbox.width / 2, Math.min(canvas.width - bounds.idbox.width / 2, newX));
-                state.idBoxY = Math.max(bounds.idbox.height / 2, Math.min(canvas.height - bounds.idbox.height / 2, newY));
+                // Margens para a caixa de ID
+                const boxWidth = bounds.idbox.width;
+                const boxHeight = bounds.idbox.height;
+                state.idBoxX = Math.max(boxWidth / 2, Math.min(canvasWidth - boxWidth / 2, newX));
+                state.idBoxY = Math.max(boxHeight / 2 + 10, Math.min(canvasHeight - boxHeight / 2 - 10, newY));
             }
 
             updateCanvas();
@@ -683,62 +799,52 @@
         isDragging = false;
         draggedElement = null;
         const canvas = document.getElementById('welcomeCanvas');
-        canvas.classList.remove('dragging', 'draggable', 'canvas-draggable');
-        updateCanvas();
+        canvas.classList.remove('dragging');
+        
+        // Remove 'draggable' e 'canvas-draggable' para resetar o cursor padrão se não estiver sobre um elemento
+        canvas.classList.remove('draggable');
+        canvas.classList.remove('canvas-draggable');
     }
-
-    function handleMouseDown(e) { if (e.button !== 0) return; handleInteractionStart(e, e.clientX, e.clientY, false); }
-    function handleMouseMove(e) { handleInteractionMove(e.clientX, e.clientY); }
-    function handleMouseUp() { handleInteractionEnd(); }
-
-    function handleTouchStart(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY, true); }
-    function handleTouchMove(e) { if (e.touches.length > 1) return; e.preventDefault(); handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY); }
-    function handleTouchEnd() { handleInteractionEnd(); }
-
-    // --------- SELECT / PAINÉIS e persistência ----------
-    function onPanelChange() {
-        const sel = document.getElementById('panelSelect');
-        const panels = document.querySelectorAll('.panel');
-        panels.forEach(p => p.classList.remove('active'));
-        const active = document.getElementById(sel.value);
-        if (active) active.classList.add('active');
-        // guarda no storage a aba selecionada
-        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, sel.value);
-    }
-
-    function loadSavedPanel() {
-        const saved = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY);
-        const sel = document.getElementById('panelSelect');
-        if (saved) {
-            sel.value = saved;
-        }
-        onPanelChange();
-    }
-
-    function saveSelectedPanelToStorage() {
-        const sel = document.getElementById('panelSelect');
-        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, sel.value);
-        alert('Aba salva.');
-    }
-
-    // inic
-    window.onload = () => {
+    
+    // Configuração de Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
         initializeState();
+        updateCanvas();
+        loadSelectedPanel(); 
+
         const canvas = document.getElementById('welcomeCanvas');
 
-        canvas.addEventListener('mousedown', handleMouseDown);
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        // Mouse Events
+        canvas.addEventListener('mousedown', (e) => handleInteractionStart(e, e.clientX, e.clientY, false));
+        window.addEventListener('mousemove', (e) => handleInteractionMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleInteractionEnd);
 
-        canvas.addEventListener('mousemove', handleMouseMove);
+        // Touch Events
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault(); // Evita scroll ao tentar arrastar elemento
+                handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY, true);
+            }
+        }, { passive: false });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isDragging) {
+                e.preventDefault(); 
+                handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+        
+        window.addEventListener('touchend', handleInteractionEnd);
+        window.addEventListener('touchcancel', handleInteractionEnd);
 
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd);
+        // Eventos de alteração para todos os ranges/inputs que afetam o canvas
+        document.querySelectorAll('input[type="range"], input[type="text"], input[type="color"]').forEach(input => {
+            input.addEventListener('input', updateCanvas);
+        });
 
-        loadSavedPanel();
-        updateCanvas();
-    };
+    });
+
 </script>
+
 </body>
 </html>
