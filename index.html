@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Canvas de Boas-Vindas</title>
+    <title>Gerador Welcome</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 🎨 Estilos da Aplicação e Fontes */
@@ -20,7 +20,8 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1F2937;
+            /* 🟢 NOVO: Fundo principal do WhatsApp Dark */
+            background-color: #374151; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -45,7 +46,6 @@
             height: auto;
             cursor: default;
             z-index: 10;
-            /* Isso é crucial para mobile: bloqueia o scroll da página ao tocar no canvas */
             touch-action: none; 
         }
         /* Cursores para o Modo Mover */
@@ -57,7 +57,8 @@
             width: 100%;
             max-width: 450px;
             z-index: 20;
-            background-color: #1F2937;
+            /* 🟢 NOVO: Fundo dos painéis (Um pouco mais claro que o body) */
+            background-color: #232D36;
             padding-bottom: 20px;
         }
 
@@ -65,13 +66,24 @@
         .color-control { display: flex; align-items: center; }
         .color-input-hex { width: 80px; text-align: center; margin-left: 8px; text-transform: uppercase; }
         
-        .block-select { width: 100%; padding: .5rem; border-radius: .5rem; background: #111827; color: #fff; border: 1px solid #374151; }
+        .block-select { 
+            width: 100%; 
+            padding: .5rem; 
+            border-radius: .5rem; 
+            /* 🟢 NOVO: Fundo de inputs (Mais escuro) */
+            background: #101D25; 
+            /* 🟢 NOVO: Cor de texto principal (Claro) */
+            color: #E9EDEF; 
+            /* 🟢 NOVO: Borda/Separador */
+            border: 1px solid #374151; 
+        }
         .panel { display: none; }
         .panel.active { display: block; }
         .summary-item { 
             display: flex; 
             justify-content: space-between; 
             padding: 8px 0; 
+            /* 🟢 NOVO: Separador */
             border-bottom: 1px dashed #374151;
         }
         .summary-item:last-child { border-bottom: none; }
@@ -79,11 +91,11 @@
 </head>
 <body class="md:flex md:flex-row md:items-start md:justify-center md:gap-8">
 
-<div class="container bg-gray-800 p-6 rounded-lg shadow-xl mb-6">
-    <h1 class="text-2xl font-bold text-white mb-4">Gerador de Canvas de Boas-Vindas</h1>
+<div class="container bg-gray-700 p-6 rounded-lg shadow-xl mb-6">
+    <h1 class="text-2xl font-bold mb-4 text-white">Mensagens de <span style="color:#7289da;">Boas-vindas</span> em grupos</h1>
 
     <div class="mb-4">
-        <label for="panelSelect" class="block text-gray-300 mb-2">Selecionar bloco de ajustes:</label>
+        <label for="panelSelect" class="block text-gray-200 mb-2">Selecionar bloco de ajustes:</label>
         <select id="panelSelect" class="block-select" onchange="onPanelChange()">
             <option value="panel-background">Background 🖼️</option>
             <option value="panel-text">Texto & Cores 🎨</option>
@@ -95,24 +107,24 @@
     <div id="panel-background" class="panel active">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div class="input-group">
-                <label for="userPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Usuário:</label>
-                <input type="text" id="userPicUrlInput" value="https://i.ibb.co/yFhsWR4v/lua.gif" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <label for="userPicUrlInput" class="block text-gray-200 mb-1">URL,Usuário=estaitco🎨:</label>
+                <input type="text" id="userPicUrlInput" value="https://i.ibb.co/yFhsWR4v/lua.gif" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
             </div>
             <div class="input-group">
-                <label for="groupPicUrlInput" class="block text-gray-300 mb-1">URL da Foto do Grupo:</label>
-                <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/CKWjkPWy/si.jpg" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <label for="groupPicUrlInput" class="block text-gray-200 mb-1">URL,Grupo=estaitco🎨:</label>
+                <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/CKWjkPWy/si.jpg" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
             </div>
         </div>
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label for="bgUrlInput" class="block text-gray-300 mb-1">URL do Plano de Fundo (Opcional):</label>
-                <input type="text" id="bgUrlInput" value="false" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <label for="bgUrlInput" class="block text-gray-200 mb-1">URL do Plano de Fundo (Opcional):</label>
+                <input type="text" id="bgUrlInput" value="false" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
             </div>
             <div>
-                <label for="bgColorInput" class="block text-gray-300 mb-1">Cor Sólida de Fundo:</label>
+                <label for="bgColorInput" class="block text-gray-200 mb-1">Cor Sólida de Fundo:</label>
                 <div class="color-control">
-                    <input type="color" id="bgColorInput" value="#0B1323" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
-                    <input type="text" id="bgColorHex" value="#36393F" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'bgColorInput'); updateCanvas()">
+                    <input type="color" id="bgColorInput" value="#0B1323" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
+                    <input type="text" id="bgColorHex" value="#36393F" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'bgColorInput'); updateCanvas()">
                 </div>
             </div>
         </div>
@@ -123,36 +135,36 @@
             <h2 class="text-xl font-bold text-purple-400 mb-4">Ajustes de Texto e Cores</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="input-group">
-                    <label for="welcomeTextInput" class="block text-gray-300 mb-1">
+                    <label for="welcomeTextInput" class="block text-gray-200 mb-1">
                         Texto de Boas-Vindas:
                         <span class="text-xs text-blue-400 ml-2">X:<span id="welcomeXValue">450</span> Y:<span id="welcomeYValue">230</span></span>
                     </label>
-                    <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                    <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
                 </div>
                 <div class="input-group">
-                    <label for="welcomeColorInput" class="block text-gray-300 mb-1">Cor do Texto de Boas-Vindas:</label>
+                    <label for="welcomeColorInput" class="block text-gray-200 mb-1">Cor do Texto de Boas-Vindas:</label>
                     <div class="color-control">
-                        <input type="color" id="welcomeColorInput" value="#FFFFFF" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'welcomeColorHex'); updateCanvas()">
-                        <input type="text" id="welcomeColorHex" value="#FFFFFF" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'welcomeColorInput'); updateCanvas()">
+                        <input type="color" id="welcomeColorInput" value="#FFFFFF" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'welcomeColorHex'); updateCanvas()">
+                        <input type="text" id="welcomeColorHex" value="#FFFFFF" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'welcomeColorInput'); updateCanvas()">
                     </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 <div class="input-group">
-                    <label for="groupNameColorInput" class="block text-gray-300 mb-1">Cor do Nome do Grupo:</label>
+                    <label for="groupNameColorInput" class="block text-gray-200 mb-1">Cor do Nome do Grupo:</label>
                     <div class="color-control">
-                        <input type="color" id="groupNameColorInput" value="#FFD900" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
-                        <input type="text" id="groupNameColorHex" value="#FFD900" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
+                        <input type="color" id="groupNameColorInput" value="#FFD900" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
+                        <input type="text" id="groupNameColorHex" value="#FFD900" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
                     </div>
                 </div>
                 <div class="input-group">
-                    <label for="idBoxColorInput" class="block text-gray-300 mb-1">
+                    <label for="idBoxColorInput" class="block text-gray-200 mb-1">
                         Cor do Box de ID:
                         <span class="text-xs text-blue-400 ml-2">X:<span id="idBoxXValue">450</span> Y:<span id="idBoxYValue">310</span></span>
                     </label>
                     <div class="color-control">
-                        <input type="color" id="idBoxColorInput" value="#454545" class="color-picker rounded bg-gray-700 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
-                        <input type="text" id="idBoxColorHex" value="#000000" maxlength="7" class="color-input-hex p-1 rounded bg-gray-700 border border-gray-600 text-white" oninput="syncColorInputs(this, 'idBoxColorInput'); updateCanvas()">
+                        <input type="color" id="idBoxColorInput" value="#454545" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
+                        <input type="text" id="idBoxColorHex" value="#000000" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'idBoxColorInput'); updateCanvas()">
                     </div>
                 </div>
             </div>
@@ -163,7 +175,7 @@
         <div class="mt-6 border-t pt-4 border-gray-700">
             <h2 class="text-xl font-bold text-blue-400 mb-4">Ajustes de Posição e Tamanho (Canvas 900x350px)</h2>
 
-            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Texto de Boas-Vindas (Tamanho)</h3>
+            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-4">Texto de Boas-Vindas (Tamanho)</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-1">
                     <label for="welcomeFontSize" class="block text-gray-400 text-xs mb-1">Tamanho da Fonte: <span id="welcomeFontSizeValue">50</span>px</label>
@@ -172,7 +184,7 @@
             </div>
             <hr class="mt-4 border-gray-700">
             
-            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Foto do Usuário (Maior)</h3>
+            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-4">Foto do Usuário (Maior)</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="userRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="userRadiusValue">66</span>px</label>
@@ -188,7 +200,7 @@
                 </div>
             </div>
 
-            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-6">Foto do Grupo (Menor)</h3>
+            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-6">Foto do Grupo (Menor)</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="groupRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="groupRadiusValue">35</span>px</label>
@@ -211,19 +223,25 @@
     <div id="panel-summary" class="panel">
         <div class="mt-6 border-t pt-4 border-gray-700">
             <h2 class="text-xl font-bold text-green-400 mb-4">Resumo dos Ajustes (Canvas 900x350px)</h2>
-            <div id="summary-content" class="text-sm text-gray-200 bg-gray-700 p-4 rounded-lg">
+            <div id="summary-content" class="text-sm text-gray-200 bg-gray-900 p-4 rounded-lg">
                 Carregando resumo...
             </div>
             <p class="text-xs text-gray-500 mt-4">As posições são coordenadas (X, Y) do centro de cada elemento.</p>
         </div>
         
         <div class="mt-4">
-            <button id="exportButton" onclick="exportConfigAsJson()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
+            <button id="exportButton" 
+        onclick="exportConfigAsJson()" 
+        class="w-full font-bold py-2 px-4 rounded-lg hover:opacity-90" 
+        style="background-color:#00B09C; color: #101D25;"
+    >
+        Exportar Config (.json)
+            </button>
         </div>
     </div>
 
     <div class="mt-4 flex gap-2">
-        <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">
+        <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="w-full font-bold py-2 px-4 rounded-lg" style="background-color:#00B09C; color: #101D25;">
             Ativar Modo Mover
         </button>
         <button onclick="saveSelectedPanelToStorage()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
@@ -250,7 +268,7 @@
     let draggedElement = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    let isMoveModeActive = false; // Controle do botão de mobile
+    let isMoveModeActive = false;
     // ----------------------------------------
 
     // Estado das posições (atualizado pelos ranges e pelo drag)
@@ -265,12 +283,10 @@
     const ctx = canvas.getContext('2d');
 
     function initializeState() {
-        // Inicializa o estado com os valores dos inputs de range do HTML
         state.userX = parseInt(document.getElementById('userX').value);
         state.userY = parseInt(document.getElementById('userY').value);
         state.groupX = parseInt(document.getElementById('groupX').value);
         state.groupY = parseInt(document.getElementById('groupY').value);
-        // Posições iniciais de texto/idbox (o arrasto as controla)
         state.welcomeX = 450; 
         state.welcomeY = 230;
         state.idBoxX = 450;
@@ -291,21 +307,17 @@
     }
 
     function startDrag(e) {
-        // Bloqueia a funcionalidade de arrasto se o modo não estiver ativo
         if (!isMoveModeActive) {
-            if (e.touches) {
-                // Em touch, previne o scroll da página, mas não inicia o arrasto
-                e.preventDefault(); 
-            }
+            if (e.touches) { e.preventDefault(); }
             return; 
         }
 
         e.preventDefault(); 
         
         const pos = getMousePos(e);
-        const bounds = getElementBounds(ctx, getCurrentConfig()); // <-- Passa a config completa
+        // Garante que o raio correto seja pego para o hit test
+        const bounds = getElementBounds(ctx, getCurrentConfig()); 
 
-        // Ordem de prioridade para arrastar
         if (hitTest(pos.x, pos.y, bounds.idbox)) {
             draggedElement = 'idBox';
             dragOffsetX = pos.x - state.idBoxX;
@@ -315,19 +327,17 @@
             dragOffsetX = pos.x - state.welcomeX;
             dragOffsetY = pos.y - state.welcomeY;
         } 
-        // ATENÇÃO: Verificação de círculo para o Usuário
+        // Correção de hit test para os perfis circulares
         else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
             draggedElement = 'userAvatar';
             dragOffsetX = pos.x - state.userX;
             dragOffsetY = pos.y - state.userY;
         } 
-        // ATENÇÃO: Verificação de círculo para o Grupo
         else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
             draggedElement = 'groupAvatar';
             dragOffsetX = pos.x - state.groupX;
             dragOffsetY = pos.y - state.groupY;
         } else {
-            // Clicou/tocou em área vazia e modo ativo: não arrasta nada
             draggedElement = null;
             return;
         }
@@ -348,14 +358,12 @@
 
         switch (draggedElement) {
             case 'userAvatar':
-                // Limitações de borda para o perfil do usuário
                 state.userX = Math.max(50, Math.min(canvasWidth - 50, newX));
                 state.userY = Math.max(50, Math.min(canvasHeight - 50, newY));
                 updateRangeFromState('userX', state.userX);
                 updateRangeFromState('userY', state.userY);
                 break;
             case 'groupAvatar':
-                // Limitações de borda para o perfil do grupo
                 state.groupX = Math.max(20, Math.min(canvasWidth - 20, newX));
                 state.groupY = Math.max(20, Math.min(canvasHeight - 20, newY));
                 updateRangeFromState('groupX', state.groupX);
@@ -379,27 +387,28 @@
             isDragging = false;
             draggedElement = null;
             canvas.classList.remove('dragging');
-            updateCanvas(); // Garante o refresh final e a atualização dos valores X/Y
+            updateCanvas(); 
         }
     }
     
+    // 🟢 NOVO: Cores do Botão ajustadas para o tema WhatsApp Dark
     function toggleMoveMode() {
         isMoveModeActive = !isMoveModeActive;
         const button = document.getElementById('toggleMoveModeButton');
         
         if (isMoveModeActive) {
             button.textContent = 'Desativar Modo Mover (Arrasto Habilitado)';
-            button.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-            button.classList.add('bg-green-600', 'hover:bg-green-700');
+            // Verde Destaque
+            button.style.backgroundColor = '#00B09C'; 
+            button.style.color = '#101D25';
             canvas.classList.add('canvas-draggable');
-            // Altera o cursor para o ícone de mão
             canvas.style.cursor = 'grab'; 
         } else {
             button.textContent = 'Ativar Modo Mover';
-            button.classList.remove('bg-green-600', 'hover:bg-green-700');
-            button.classList.add('bg-orange-500', 'hover:bg-orange-600');
+            // Cinza Secundário/Padrão
+            button.style.backgroundColor = '#374151'; 
+            button.style.color = '#E9EDEF';
             canvas.classList.remove('canvas-draggable');
-            // Volta ao cursor padrão
             canvas.style.cursor = 'default'; 
         }
     }
@@ -413,7 +422,64 @@
     window.addEventListener('touchend', endDrag);
     // --- FIM DAS FUNÇÕES DE ARRASTO ---
 
-    // --- FUNÇÕES DE DESENHO E LÓGICA ---
+    // ... (O restante das funções de desenho e lógica permanece o mesmo, incluindo drawCircularImage) ...
+
+    function getElementBounds(ctx, config) {
+        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
+        const ID_TEXT = FIXED_USER_NAME;
+
+        // Passa o raio correto do input para o hit test
+        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
+        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
+
+        const fontSize = document.getElementById('welcomeFontSize').value;
+        ctx.font = getWelcomeFont();
+        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
+        const welcomeWidth = welcomeMetrics.width;
+        const welcomeHeight = parseInt(fontSize) * 1.1; 
+        const welcomeBounds = {
+            x: state.welcomeX - welcomeWidth / 2, 
+            y: state.welcomeY - welcomeHeight,
+            width: welcomeWidth,
+            height: welcomeHeight 
+        };
+
+        ctx.font = DEFAULT_FONT;
+        const idMetrics = ctx.measureText(ID_TEXT);
+        const boxPaddingX = 20;
+        const boxPaddingY = 10;
+        const boxWidth = idMetrics.width + boxPaddingX * 2;
+        const boxHeight = 28 + boxPaddingY * 2;
+        const idBoxBounds = {
+            x: state.idBoxX - boxWidth / 2,
+            y: state.idBoxY - boxHeight / 2,
+            width: boxWidth,
+            height: boxHeight
+        };
+
+        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
+    }
+
+    function hitTest(x, y, bounds) {
+        return x >= bounds.x && x <= bounds.x + bounds.width &&
+               y >= bounds.y && y <= bounds.y + bounds.height;
+    }
+
+    // 🌟 CORREÇÃO FINAL: Fórmula de distância para o hit test circular
+    function hitTestCircle(x, y, circleBounds) {
+        const dx = x - circleBounds.x;
+        const dy = y - circleBounds.y;
+        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
+    }
+    
+    // ... (O restante das funções como drawWelcomeCanvas, updateCanvas, etc., que não foram alteradas) ...
+    // Funções auxiliares (loadImageAsync, drawCircularImage, syncColorInputs, drawWelcomeCanvas, 
+    // getCurrentConfig, updateCanvas, updateSummaryPanel, onPanelChange, loadSelectedPanel, 
+    // saveSelectedPanelToStorage, updateRangeFromState, exportConfigAsJson)
+    // são omitidas aqui por brevidade, mas devem estar COMPLETAS no arquivo final.
+    
+    
+    // Função drawCircularImage: Mantenha a versão anterior que desenha a imagem no Canvas
 
     const loadImageAsync = (url) => {
         return new Promise((resolve) => {
@@ -471,79 +537,12 @@
         }
     };
 
-    function getElementBounds(ctx, config) {
-        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
-        const ID_TEXT = FIXED_USER_NAME;
-
-        // 🟢 CORREÇÃO: Passando o raio para o hit test
-        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
-        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
-
-        const fontSize = document.getElementById('welcomeFontSize').value;
-        ctx.font = getWelcomeFont();
-        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
-        const welcomeWidth = welcomeMetrics.width;
-        // Ajuste heurístico para a altura do texto
-        const welcomeHeight = parseInt(fontSize) * 1.1; 
-        const welcomeBounds = {
-            // Posição de texto é o centro, ajusta para o canto superior esquerdo para hitTest
-            x: state.welcomeX - welcomeWidth / 2, 
-            y: state.welcomeY - welcomeHeight,
-            width: welcomeWidth,
-            height: welcomeHeight 
-        };
-
-        ctx.font = DEFAULT_FONT;
-        const idMetrics = ctx.measureText(ID_TEXT);
-        const boxPaddingX = 20;
-        const boxPaddingY = 10;
-        const boxWidth = idMetrics.width + boxPaddingX * 2;
-        const boxHeight = 28 + boxPaddingY * 2;
-        const idBoxBounds = {
-            // Posição do box é o centro
-            x: state.idBoxX - boxWidth / 2,
-            y: state.idBoxY - boxHeight / 2,
-            width: boxWidth,
-            height: boxHeight
-        };
-
-        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
-    }
-
-    function hitTest(x, y, bounds) {
-        return x >= bounds.x && x <= bounds.x + bounds.width &&
-               y >= bounds.y && y <= bounds.y + bounds.height;
-    }
-
-    // 🟢 CORREÇÃO: Função de hit test para círculo
-    function hitTestCircle(x, y, circleBounds) {
-        const dx = x - circleBounds.x;
-        const dy = y - circleBounds.y;
-        // Verifica se a distância do ponto (x,y) ao centro do círculo (circleBounds.x, circleBounds.y)
-        // é menor ou igual ao raio (circleBounds.radius).
-        // Usamos o quadrado da distância para evitar Math.sqrt, o que melhora a performance.
-        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
-    }
-
-    function syncColorInputs(sourceInput, targetId) {
-        const targetInput = document.getElementById(targetId);
-        let value = sourceInput.value.toUpperCase();
-
-        if (targetId.includes('Hex')) {
-            if (!value.startsWith('#')) { value = '#' + value; }
-            targetInput.value = value;
-        } else {
-            targetInput.value = value;
-        }
-    }
-
     async function drawWelcomeCanvas(config) {
         const userPicUrl = document.getElementById('userPicUrlInput').value;
         const groupPicUrl = document.getElementById('groupPicUrlInput').value;
 
         const { bgUrl, bgColor, userRadius, groupRadius } = config;
 
-        // Posições agora vêm do STATE, que é atualizado pelo range e pelo drag
         const userX = state.userX, userY = state.userY, groupX = state.groupX, groupY = state.groupY,
               welcomeX = state.welcomeX, welcomeY = state.welcomeY, idBoxX = state.idBoxX, idBoxY = state.idBoxY;
 
@@ -638,7 +637,7 @@
         ctx.font = DEFAULT_FONT;
         ctx.fillText(ID_TEXT, idBoxX, textBaselineY);
     }
-
+    
     function getCurrentConfig() {
         return {
             bgUrl: document.getElementById('bgUrlInput').value,
@@ -661,8 +660,20 @@
         };
     }
 
+    function syncColorInputs(sourceInput, targetId) {
+        const targetInput = document.getElementById(targetId);
+        let value = sourceInput.value.toUpperCase();
+
+        if (targetId.includes('Hex')) {
+            if (!value.startsWith('#')) { value = '#' + value; }
+            targetInput.value = value;
+        } else {
+            targetInput.value = value;
+        }
+    }
+
+
     function updateCanvas() {
-        // Atualiza o estado a partir dos ranges, exceto se estivermos arrastando
         if (!isDragging) {
             state.userX = parseInt(document.getElementById('userX').value);
             state.userY = parseInt(document.getElementById('userY').value);
@@ -670,7 +681,6 @@
             state.groupY = parseInt(document.getElementById('groupY').value);
         }
 
-        // Sincroniza cores e atualiza a exibição dos valores X/Y
         syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
         syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
         syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
@@ -802,9 +812,8 @@
         loadSelectedPanel();
         updateCanvas();
         
-        // Configura o estado inicial do botão (desativado)
-        isMoveModeActive = true; // Força para que o toggle funcione corretamente
-        toggleMoveMode(); // Chama para definir o estado inicial para false e o texto correto
+        isMoveModeActive = true; 
+        toggleMoveMode(); 
     };
 </script>
 </body>
