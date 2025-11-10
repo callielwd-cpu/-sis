@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canvas de Boas-Vindas</title>
+    <title>Gerador de Canvas de Boas-Vindas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 🎨 Estilos da Aplicação e Fontes */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
+        /* Assumindo que o arquivo 'TT Runs Trial ExtraBold.ttf' esteja na mesma pasta */
         @font-face {
             font-family: 'TTRuns';
             src: url('TT Runs Trial ExtraBold.ttf') format('truetype');
@@ -35,8 +37,7 @@
             }
         }
 
-        /* Removida a classe .canvas-moved e canvas-draggable-bg */
-
+        /* Estilos do Canvas */
         #welcomeCanvas {
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -44,15 +45,14 @@
             height: auto;
             cursor: default;
             z-index: 10;
-            /* Esta linha é crucial para prevenir o scroll no mobile ao arrastar */
+            /* Isso é crucial para mobile: bloqueia o scroll da página ao tocar no canvas */
             touch-action: none; 
-            /* Para manter a posição padrão no fluxo do documento */
-            position: relative; 
         }
-        #welcomeCanvas.draggable { cursor: move; }
+        /* Cursores para o Modo Mover */
         #welcomeCanvas.canvas-draggable { cursor: grab; }
         #welcomeCanvas.dragging { cursor: grabbing; }
 
+        /* Estilos de Controles */
         .container {
             width: 100%;
             max-width: 450px;
@@ -64,27 +64,7 @@
         .input-group { margin-bottom: 10px; }
         .color-control { display: flex; align-items: center; }
         .color-input-hex { width: 80px; text-align: center; margin-left: 8px; text-transform: uppercase; }
-        .color-picker { width: 100%; height: 40px; }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #5865F2;
-            cursor: pointer;
-            border-radius: 50%;
-            margin-top: -8px;
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #5865F2;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-        input[type="range"] { height: 4px; background: #4F545C; }
-
-        /* pequenos ajustes para o select/menu */
+        
         .block-select { width: 100%; padding: .5rem; border-radius: .5rem; background: #111827; color: #fff; border: 1px solid #374151; }
         .panel { display: none; }
         .panel.active { display: block; }
@@ -123,7 +103,6 @@
                 <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/CKWjkPWy/si.jpg" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
             </div>
         </div>
-
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="bgUrlInput" class="block text-gray-300 mb-1">URL do Plano de Fundo (Opcional):</label>
@@ -142,7 +121,6 @@
     <div id="panel-text" class="panel">
         <div class="mt-4 border-t pt-4 border-gray-700">
             <h2 class="text-xl font-bold text-purple-400 mb-4">Ajustes de Texto e Cores</h2>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="input-group">
                     <label for="welcomeTextInput" class="block text-gray-300 mb-1">
@@ -159,7 +137,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 <div class="input-group">
                     <label for="groupNameColorInput" class="block text-gray-300 mb-1">Cor do Nome do Grupo:</label>
@@ -194,8 +171,8 @@
                 </div>
             </div>
             <hr class="mt-4 border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Foto do Usuário (Maior) - Arrastável!</h3>
-
+            
+            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-4">Foto do Usuário (Maior)</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="userRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="userRadiusValue">66</span>px</label>
@@ -211,8 +188,7 @@
                 </div>
             </div>
 
-            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-6">Foto do Grupo (Menor) - Arrastável!</h3>
-
+            <h3 class="text-lg font-semibold text-gray-300 mb-2 mt-6">Foto do Grupo (Menor)</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="groupRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="groupRadiusValue">35</span>px</label>
@@ -228,7 +204,7 @@
                 </div>
             </div>
 
-            <p class="text-sm text-gray-500 mt-4">Dica: Arraste o <strong>texto</strong>, a <strong>Caixa de ID</strong> ou as <strong>Fotos</strong> para mover os elementos. Em dispositivos touch, o canvas NÃO se move ao arrastar a área vazia.</p>
+            <p class="text-sm text-gray-500 mt-4">Dica: Use o botão **"Ativar Modo Mover"** abaixo para arrastar todos os elementos diretamente no Canvas!</p>
         </div>
     </div>
     
@@ -238,14 +214,18 @@
             <div id="summary-content" class="text-sm text-gray-200 bg-gray-700 p-4 rounded-lg">
                 Carregando resumo...
             </div>
-            <p class="text-xs text-gray-500 mt-4">Os valores de cor e URL são exibidos como foram configurados. As posições são coordenadas (X, Y).</p>
+            <p class="text-xs text-gray-500 mt-4">As posições são coordenadas (X, Y) do centro de cada elemento.</p>
         </div>
         
         <div class="mt-4">
-               <button id="exportButton" onclick="exportConfigAsJson()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
+            <button id="exportButton" onclick="exportConfigAsJson()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
         </div>
-        </div>
+    </div>
+
     <div class="mt-4 flex gap-2">
+        <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">
+            Ativar Modo Mover
+        </button>
         <button onclick="saveSelectedPanelToStorage()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
     </div>
 </div>
@@ -265,16 +245,15 @@
     };
     const DEFAULT_FONT = '28px Inter, sans-serif';
 
+    // --- VARIÁVEIS DE ESTADO DE ARRASTO ---
     let isDragging = false;
     let draggedElement = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    // Variáveis de drag do background do canvas removidas
+    let isMoveModeActive = false; // Controle do botão de mobile
+    // ----------------------------------------
 
-    let canvasDragOffsetX = 0;
-    let canvasDragOffsetY = 0;
-    let isTouchDevice = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
-
+    // Estado das posições (atualizado pelos ranges e pelo drag)
     let state = {
         userX: 437, userY: 110,
         groupX: 655, groupY: 300,
@@ -282,110 +261,113 @@
         idBoxX: 450, idBoxY: 310
     };
 
+    const canvas = document.getElementById('welcomeCanvas');
+    const ctx = canvas.getContext('2d');
+
     function initializeState() {
+        // Inicializa o estado com os valores dos inputs de range do HTML
         state.userX = parseInt(document.getElementById('userX').value);
         state.userY = parseInt(document.getElementById('userY').value);
         state.groupX = parseInt(document.getElementById('groupX').value);
         state.groupY = parseInt(document.getElementById('groupY').value);
-        state.welcomeX = 450;
+        // Posições iniciais de texto/idbox (o arrasto as controla)
+        state.welcomeX = 450; 
         state.welcomeY = 230;
         state.idBoxX = 450;
         state.idBoxY = 310;
     }
 
-    const canvas = document.getElementById('welcomeCanvas');
-
-    // Funções de drag do background do canvas removidas (toggleBackgroundDragging, isBgDragging, etc.)
-
+    // --- FUNÇÕES DE ARRASTO ---
     function getMousePos(e) {
         const rect = canvas.getBoundingClientRect();
-        // As coordenadas são sempre relativas ao canvas, corrigindo o offset da página
-        let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        return { 
-            x: clientX - rect.left, 
-            y: clientY - rect.top 
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
         };
     }
 
     function startDrag(e) {
-        // e.preventDefault() aqui é crucial para o mobile, prevenindo o scroll/zoom
+        // Bloqueia a funcionalidade de arrasto se o modo não estiver ativo
+        if (!isMoveModeActive) {
+            if (e.touches) {
+                // Em touch, previne o scroll da página, mas não inicia o arrasto
+                e.preventDefault(); 
+            }
+            return; 
+        }
+
         e.preventDefault(); 
         
         const pos = getMousePos(e);
-        const ctx = canvas.getContext('2d');
-        const config = getCurrentConfig();
-        const bounds = getElementBounds(ctx, config);
+        const bounds = getElementBounds(ctx, getCurrentConfig()); // <-- Passa a config completa
 
-        if (hitTest(pos.x, pos.y, bounds.welcome)) {
-            draggedElement = 'welcome';
-            dragOffsetX = pos.x - state.welcomeX;
-            dragOffsetY = pos.y - state.welcomeY;
-        } else if (hitTest(pos.x, pos.y, bounds.idbox)) {
-            draggedElement = 'idbox';
+        // Ordem de prioridade para arrastar
+        if (hitTest(pos.x, pos.y, bounds.idbox)) {
+            draggedElement = 'idBox';
             dragOffsetX = pos.x - state.idBoxX;
             dragOffsetY = pos.y - state.idBoxY;
-        } else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
-            draggedElement = 'user';
+        } else if (hitTest(pos.x, pos.y, bounds.welcome)) {
+            draggedElement = 'welcomeText';
+            dragOffsetX = pos.x - state.welcomeX;
+            dragOffsetY = pos.y - state.welcomeY;
+        } 
+        // ATENÇÃO: Verificação de círculo para o Usuário
+        else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
+            draggedElement = 'userAvatar';
             dragOffsetX = pos.x - state.userX;
             dragOffsetY = pos.y - state.userY;
-        } else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
-            draggedElement = 'group';
+        } 
+        // ATENÇÃO: Verificação de círculo para o Grupo
+        else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
+            draggedElement = 'groupAvatar';
             dragOffsetX = pos.x - state.groupX;
             dragOffsetY = pos.y - state.groupY;
+        } else {
+            // Clicou/tocou em área vazia e modo ativo: não arrasta nada
+            draggedElement = null;
+            return;
         }
-        
-        if (draggedElement) {
-            isDragging = true;
-            canvas.classList.add('dragging');
-            canvas.classList.remove('canvas-draggable');
-        }
+
+        isDragging = true;
+        canvas.classList.add('dragging');
     }
 
-    function doDrag(e) {
+    function drag(e) {
         if (!isDragging) return;
-        
-        // e.preventDefault() aqui é crucial para o mobile, impedindo o scroll durante o arrasto do elemento
-        e.preventDefault(); 
-        
-        const pos = getMousePos(e);
+        e.preventDefault();
 
+        const pos = getMousePos(e);
         const newX = pos.x - dragOffsetX;
         const newY = pos.y - dragOffsetY;
-
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        
-        const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-        
+
         switch (draggedElement) {
-            case 'welcome':
-                state.welcomeX = clamp(newX, 0, canvasWidth);
-                state.welcomeY = clamp(newY, 0, canvasHeight);
-                document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
-                document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
-                break;
-            case 'idbox':
-                state.idBoxX = clamp(newX, 0, canvasWidth);
-                state.idBoxY = clamp(newY, 0, canvasHeight);
-                document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
-                document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-                break;
-            case 'user':
-                state.userX = clamp(newX, 0, canvasWidth);
-                state.userY = clamp(newY, 0, canvasHeight);
+            case 'userAvatar':
+                // Limitações de borda para o perfil do usuário
+                state.userX = Math.max(50, Math.min(canvasWidth - 50, newX));
+                state.userY = Math.max(50, Math.min(canvasHeight - 50, newY));
                 updateRangeFromState('userX', state.userX);
                 updateRangeFromState('userY', state.userY);
-                document.getElementById('userXValue').textContent = Math.round(state.userX);
-                document.getElementById('userYValue').textContent = Math.round(state.userY);
                 break;
-            case 'group':
-                state.groupX = clamp(newX, 0, canvasWidth);
-                state.groupY = clamp(newY, 0, canvasHeight);
+            case 'groupAvatar':
+                // Limitações de borda para o perfil do grupo
+                state.groupX = Math.max(20, Math.min(canvasWidth - 20, newX));
+                state.groupY = Math.max(20, Math.min(canvasHeight - 20, newY));
                 updateRangeFromState('groupX', state.groupX);
                 updateRangeFromState('groupY', state.groupY);
-                document.getElementById('groupXValue').textContent = Math.round(state.groupX);
-                document.getElementById('groupYValue').textContent = Math.round(state.groupY);
+                break;
+            case 'welcomeText':
+                state.welcomeX = Math.max(0, Math.min(canvasWidth, newX));
+                state.welcomeY = Math.max(0, Math.min(canvasHeight, newY));
+                break;
+            case 'idBox':
+                state.idBoxX = Math.max(0, Math.min(canvasWidth, newX));
+                state.idBoxY = Math.max(0, Math.min(canvasHeight, newY));
                 break;
         }
 
@@ -397,27 +379,45 @@
             isDragging = false;
             draggedElement = null;
             canvas.classList.remove('dragging');
-            canvas.classList.add('canvas-draggable'); 
+            updateCanvas(); // Garante o refresh final e a atualização dos valores X/Y
+        }
+    }
+    
+    function toggleMoveMode() {
+        isMoveModeActive = !isMoveModeActive;
+        const button = document.getElementById('toggleMoveModeButton');
+        
+        if (isMoveModeActive) {
+            button.textContent = 'Desativar Modo Mover (Arrasto Habilitado)';
+            button.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+            button.classList.add('bg-green-600', 'hover:bg-green-700');
+            canvas.classList.add('canvas-draggable');
+            // Altera o cursor para o ícone de mão
+            canvas.style.cursor = 'grab'; 
+        } else {
+            button.textContent = 'Ativar Modo Mover';
+            button.classList.remove('bg-green-600', 'hover:bg-green-700');
+            button.classList.add('bg-orange-500', 'hover:bg-orange-600');
+            canvas.classList.remove('canvas-draggable');
+            // Volta ao cursor padrão
+            canvas.style.cursor = 'default'; 
         }
     }
 
-    // Adiciona os event listeners para as interações de arrasto
+    // Event Listeners para Desktop e Mobile
     canvas.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', doDrag);
+    window.addEventListener('mousemove', drag);
     window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', endDrag);
+    // --- FIM DAS FUNÇÕES DE ARRASTO ---
 
-    // Usa { passive: false } nas interações de toque para que e.preventDefault() funcione corretamente
-    if (isTouchDevice) {
-        canvas.addEventListener('touchstart', startDrag, { passive: false });
-        window.addEventListener('touchmove', doDrag, { passive: false });
-        window.addEventListener('touchend', endDrag);
-    }
-    // --- FIM DA LÓGICA DE DRAG MELHORADA PARA MOBILE ---
-
+    // --- FUNÇÕES DE DESENHO E LÓGICA ---
 
     const loadImageAsync = (url) => {
         return new Promise((resolve) => {
-            if (!url || url.trim() === '') return resolve(null);
+            if (!url || url.trim() === '' || url.trim().toLowerCase() === 'false') return resolve(null);
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.onload = () => resolve(img);
@@ -475,19 +475,22 @@
         const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
         const ID_TEXT = FIXED_USER_NAME;
 
-        const userAvatarBounds = { x: config.userX, y: config.userY, radius: config.userRadius };
-        const groupAvatarBounds = { x: config.groupX, y: config.groupY, radius: config.groupRadius };
+        // 🟢 CORREÇÃO: Passando o raio para o hit test
+        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
+        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
 
         const fontSize = document.getElementById('welcomeFontSize').value;
         ctx.font = getWelcomeFont();
         const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
         const welcomeWidth = welcomeMetrics.width;
-        const welcomeHeight = parseInt(fontSize);
+        // Ajuste heurístico para a altura do texto
+        const welcomeHeight = parseInt(fontSize) * 1.1; 
         const welcomeBounds = {
-            x: config.welcomeX - welcomeWidth / 2,
-            y: config.welcomeY - welcomeHeight + 5,
+            // Posição de texto é o centro, ajusta para o canto superior esquerdo para hitTest
+            x: state.welcomeX - welcomeWidth / 2, 
+            y: state.welcomeY - welcomeHeight,
             width: welcomeWidth,
-            height: welcomeHeight * 1.1
+            height: welcomeHeight 
         };
 
         ctx.font = DEFAULT_FONT;
@@ -497,8 +500,9 @@
         const boxWidth = idMetrics.width + boxPaddingX * 2;
         const boxHeight = 28 + boxPaddingY * 2;
         const idBoxBounds = {
-            x: config.idBoxX - boxWidth / 2,
-            y: config.idBoxY - boxHeight / 2,
+            // Posição do box é o centro
+            x: state.idBoxX - boxWidth / 2,
+            y: state.idBoxY - boxHeight / 2,
             width: boxWidth,
             height: boxHeight
         };
@@ -511,9 +515,13 @@
                y >= bounds.y && y <= bounds.y + bounds.height;
     }
 
+    // 🟢 CORREÇÃO: Função de hit test para círculo
     function hitTestCircle(x, y, circleBounds) {
         const dx = x - circleBounds.x;
         const dy = y - circleBounds.y;
+        // Verifica se a distância do ponto (x,y) ao centro do círculo (circleBounds.x, circleBounds.y)
+        // é menor ou igual ao raio (circleBounds.radius).
+        // Usamos o quadrado da distância para evitar Math.sqrt, o que melhora a performance.
         return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
     }
 
@@ -522,17 +530,10 @@
         let value = sourceInput.value.toUpperCase();
 
         if (targetId.includes('Hex')) {
-            if (value.length === 7) {
-                targetInput.value = value;
-            }
+            if (!value.startsWith('#')) { value = '#' + value; }
+            targetInput.value = value;
         } else {
-            if (!value.startsWith('#')) {
-                value = '#' + value;
-            }
-            const hexPattern = /^#([0-9A-F]{3}){1,2}$/i;
-            if (hexPattern.test(value)) {
-                targetInput.value = value;
-            }
+            targetInput.value = value;
         }
     }
 
@@ -542,6 +543,7 @@
 
         const { bgUrl, bgColor, userRadius, groupRadius } = config;
 
+        // Posições agora vêm do STATE, que é atualizado pelo range e pelo drag
         const userX = state.userX, userY = state.userY, groupX = state.groupX, groupY = state.groupY,
               welcomeX = state.welcomeX, welcomeY = state.welcomeY, idBoxX = state.idBoxX, idBoxY = state.idBoxY;
 
@@ -549,21 +551,19 @@
         const WELCOME_COLOR = document.getElementById('welcomeColorInput').value;
         const GROUP_NAME_COLOR = document.getElementById('groupNameColorInput').value;
         const ID_BOX_COLOR_BASE = document.getElementById('idBoxColorInput').value;
-        const ID_BOX_COLOR = ID_BOX_COLOR_BASE + "E6";
+        const ID_BOX_COLOR = ID_BOX_COLOR_BASE + "E6"; // 90% opacidade
 
         const WELCOME_FONT = getWelcomeFont();
 
-        const canvas = document.getElementById('welcomeCanvas');
-        const ctx = canvas.getContext('2d');
         const canvasWidth = canvas.width; const canvasHeight = canvas.height;
 
-        try { await document.fonts.load(`900 100px TTRuns`); } catch (err) { console.warn("Fonte TTRuns falhou, fallback."); }
+        try { await document.fonts.load(`900 100px TTRuns`); } catch (err) { /* Falha silenciosa */ }
 
         const [bgImage, userPicData, groupPicData] = await Promise.all([
             loadImageAsync(bgUrl), loadImageAsync(userPicUrl), loadImageAsync(groupPicUrl)
         ]);
 
-        // fundo
+        // 1. Fundo
         if (bgImage) {
             const imgWidth = bgImage.width, imgHeight = bgImage.height;
             const canvasRatio = canvasWidth / canvasHeight, imgRatio = imgWidth / imgHeight;
@@ -582,15 +582,18 @@
             ctx.fillStyle = bgColor; ctx.fillRect(0,0,canvasWidth,canvasHeight);
         }
 
+        // Desenho de detalhes abstratos
         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
         ctx.beginPath();
         ctx.arc(canvasWidth * 0.1, canvasHeight * 0.9, 100, 0, Math.PI * 2);
         ctx.arc(canvasWidth * 0.9, canvasHeight * 0.1, 70, 0, Math.PI * 2);
         ctx.fill();
 
+        // 2. Fotos de Perfil
         drawCircularImage(ctx, userX, userY, userRadius, userPicData, USER_FALLBACK_COLOR);
         drawCircularImage(ctx, groupX, groupY, groupRadius, groupPicData, GROUP_FALLBACK_COLOR);
 
+        // 3. Nome do Grupo (Fixo, não arrastável)
         const X_GROUP_NAME = groupX + groupRadius + 15;
         const Y_GROUP_NAME = groupY + 10;
         ctx.font = 'bold 30px Inter, sans-serif';
@@ -598,11 +601,13 @@
         ctx.fillStyle = GROUP_NAME_COLOR;
         ctx.fillText(FIXED_GROUP_NAME, X_GROUP_NAME, Y_GROUP_NAME);
 
+        // 4. Texto de Boas-Vindas (Arrastável)
         ctx.font = WELCOME_FONT;
         ctx.textAlign = 'center';
         ctx.fillStyle = WELCOME_COLOR;
         ctx.fillText(WELCOME_TEXT, welcomeX, welcomeY);
 
+        // 5. Box de ID (Arrastável)
         const ID_TEXT = FIXED_USER_NAME;
         ctx.font = DEFAULT_FONT;
         const textMetrics = ctx.measureText(ID_TEXT);
@@ -612,6 +617,7 @@
         const boxX = idBoxX - boxWidth / 2, boxY = idBoxY - boxHeight / 2;
         const borderRadius = 8;
 
+        // Desenha o box arredondado
         ctx.fillStyle = ID_BOX_COLOR;
         ctx.beginPath();
         ctx.moveTo(boxX + borderRadius, boxY);
@@ -625,6 +631,7 @@
         ctx.arcTo(boxX, boxY, boxX + borderRadius, boxY, borderRadius);
         ctx.fill();
 
+        // Escreve o texto dentro do box
         const textBaselineY = idBoxY + (28 / 2) - 2;
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'center';
@@ -655,11 +662,15 @@
     }
 
     function updateCanvas() {
-        state.userX = parseInt(document.getElementById('userX').value);
-        state.userY = parseInt(document.getElementById('userY').value);
-        state.groupX = parseInt(document.getElementById('groupX').value);
-        state.groupY = parseInt(document.getElementById('groupY').value);
+        // Atualiza o estado a partir dos ranges, exceto se estivermos arrastando
+        if (!isDragging) {
+            state.userX = parseInt(document.getElementById('userX').value);
+            state.userY = parseInt(document.getElementById('userY').value);
+            state.groupX = parseInt(document.getElementById('groupX').value);
+            state.groupY = parseInt(document.getElementById('groupY').value);
+        }
 
+        // Sincroniza cores e atualiza a exibição dos valores X/Y
         syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
         syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
         syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
@@ -675,10 +686,8 @@
         document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
         document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
         document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-
         document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
         
-        // Atualiza o resumo (se o painel estiver ativo)
         const activePanelId = document.getElementById('panelSelect').value;
         if (activePanelId === 'panel-summary') {
             updateSummaryPanel();
@@ -687,7 +696,6 @@
         drawWelcomeCanvas(getCurrentConfig());
     }
 
-    // --- FUNÇÃO PARA GERAR O NOVO PAINEL DE RESUMO ---
     function updateSummaryPanel() {
         const config = getCurrentConfig();
         const summaryDiv = document.getElementById('summary-content');
@@ -722,7 +730,6 @@
                 if (item.isColor) {
                     valueDisplay = `<span style="background-color:${item.value}; border: 1px solid #4B5563;" class="inline-block w-4 h-4 rounded-full mr-2"></span>${item.value}`;
                 } else if (item.isURL) {
-                    // Trunca a URL para exibição
                     valueDisplay = item.value.length > 50 ? item.value.substring(0, 47) + '...' : item.value;
                 } else {
                     valueDisplay = item.value;
@@ -739,7 +746,6 @@
 
         summaryDiv.innerHTML = html;
     }
-    // --- FIM DA FUNÇÃO DE RESUMO ---
 
     function onPanelChange() {
         const selectedId = document.getElementById('panelSelect').value;
@@ -748,12 +754,10 @@
         });
         document.getElementById(selectedId).classList.add('active');
         
-        // Se o painel de resumo for selecionado, atualize seu conteúdo
         if (selectedId === 'panel-summary') {
             updateSummaryPanel();
         }
 
-        // Tenta restaurar a última aba salva
         localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedId);
     }
     
@@ -763,7 +767,6 @@
             document.getElementById('panelSelect').value = lastPanelId;
             onPanelChange();
         } else {
-            // Garante que o painel default (background) esteja ativo
             document.getElementById('panel-background').classList.add('active');
             document.getElementById('panelSelect').value = 'panel-background';
         }
@@ -787,7 +790,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'welcome_canvas_config.json';
+        a.download = 'welcome_card_config.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -798,8 +801,10 @@
         initializeState();
         loadSelectedPanel();
         updateCanvas();
-        // Adiciona a classe draggable por padrão para movimentar os elementos internos
-        canvas.classList.add('canvas-draggable'); 
+        
+        // Configura o estado inicial do botão (desativado)
+        isMoveModeActive = true; // Força para que o toggle funcione corretamente
+        toggleMoveMode(); // Chama para definir o estado inicial para false e o texto correto
     };
 </script>
 </body>
