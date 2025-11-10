@@ -35,11 +35,7 @@
             }
         }
 
-        .canvas-moved {
-            position: absolute !important;
-            transform: none !important;
-            z-index: 50 !important;
-        }
+        /* Removida a classe .canvas-moved e canvas-draggable-bg */
 
         #welcomeCanvas {
             border-radius: 12px;
@@ -48,7 +44,10 @@
             height: auto;
             cursor: default;
             z-index: 10;
-            touch-action: none; /* evita scroll indesejado em touch enquanto interage */
+            /* Esta linha é crucial para prevenir o scroll no mobile ao arrastar */
+            touch-action: none; 
+            /* Para manter a posição padrão no fluxo do documento */
+            position: relative; 
         }
         #welcomeCanvas.draggable { cursor: move; }
         #welcomeCanvas.canvas-draggable { cursor: grab; }
@@ -109,7 +108,8 @@
             <option value="panel-background">Background 🖼️</option>
             <option value="panel-text">Texto & Cores 🎨</option>
             <option value="panel-position">Posição & Tamanho ⚙️</option>
-            <option value="panel-summary">Resumo dos Ajustes 📋</option> </select>
+            <option value="panel-summary">Resumo dos Ajustes 📋</option>
+        </select>
     </div>
 
     <div id="panel-background" class="panel active">
@@ -127,7 +127,7 @@
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="bgUrlInput" class="block text-gray-300 mb-1">URL do Plano de Fundo (Opcional):</label>
-                <input type="text" id="bgUrlInput" value="https://images.unsplash.com/photo-1550511520-21a1f599f65c?q=80&w=1500&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
+                <input type="text" id="bgUrlInput" value="false" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white" oninput="updateCanvas()">
             </div>
             <div>
                 <label for="bgColorInput" class="block text-gray-300 mb-1">Cor Sólida de Fundo:</label>
@@ -240,10 +240,13 @@
             </div>
             <p class="text-xs text-gray-500 mt-4">Os valores de cor e URL são exibidos como foram configurados. As posições são coordenadas (X, Y).</p>
         </div>
-    </div>
+        
+        <div class="mt-4">
+               <button id="exportButton" onclick="exportConfigAsJson()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
+        </div>
+        </div>
     <div class="mt-4 flex gap-2">
-        <button id="exportButton" onclick="exportConfigAsJson()" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Exportar Config (.json)</button>
-        <button onclick="saveSelectedPanelToStorage()" class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
+        <button onclick="saveSelectedPanelToStorage()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
     </div>
 </div>
 
@@ -266,6 +269,8 @@
     let draggedElement = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
+    // Variáveis de drag do background do canvas removidas
+
     let canvasDragOffsetX = 0;
     let canvasDragOffsetY = 0;
     let isTouchDevice = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
@@ -287,6 +292,128 @@
         state.idBoxX = 450;
         state.idBoxY = 310;
     }
+
+    const canvas = document.getElementById('welcomeCanvas');
+
+    // Funções de drag do background do canvas removidas (toggleBackgroundDragging, isBgDragging, etc.)
+
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        // As coordenadas são sempre relativas ao canvas, corrigindo o offset da página
+        let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        return { 
+            x: clientX - rect.left, 
+            y: clientY - rect.top 
+        };
+    }
+
+    function startDrag(e) {
+        // e.preventDefault() aqui é crucial para o mobile, prevenindo o scroll/zoom
+        e.preventDefault(); 
+        
+        const pos = getMousePos(e);
+        const ctx = canvas.getContext('2d');
+        const config = getCurrentConfig();
+        const bounds = getElementBounds(ctx, config);
+
+        if (hitTest(pos.x, pos.y, bounds.welcome)) {
+            draggedElement = 'welcome';
+            dragOffsetX = pos.x - state.welcomeX;
+            dragOffsetY = pos.y - state.welcomeY;
+        } else if (hitTest(pos.x, pos.y, bounds.idbox)) {
+            draggedElement = 'idbox';
+            dragOffsetX = pos.x - state.idBoxX;
+            dragOffsetY = pos.y - state.idBoxY;
+        } else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
+            draggedElement = 'user';
+            dragOffsetX = pos.x - state.userX;
+            dragOffsetY = pos.y - state.userY;
+        } else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
+            draggedElement = 'group';
+            dragOffsetX = pos.x - state.groupX;
+            dragOffsetY = pos.y - state.groupY;
+        }
+        
+        if (draggedElement) {
+            isDragging = true;
+            canvas.classList.add('dragging');
+            canvas.classList.remove('canvas-draggable');
+        }
+    }
+
+    function doDrag(e) {
+        if (!isDragging) return;
+        
+        // e.preventDefault() aqui é crucial para o mobile, impedindo o scroll durante o arrasto do elemento
+        e.preventDefault(); 
+        
+        const pos = getMousePos(e);
+
+        const newX = pos.x - dragOffsetX;
+        const newY = pos.y - dragOffsetY;
+
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        
+        const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+        
+        switch (draggedElement) {
+            case 'welcome':
+                state.welcomeX = clamp(newX, 0, canvasWidth);
+                state.welcomeY = clamp(newY, 0, canvasHeight);
+                document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
+                document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
+                break;
+            case 'idbox':
+                state.idBoxX = clamp(newX, 0, canvasWidth);
+                state.idBoxY = clamp(newY, 0, canvasHeight);
+                document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
+                document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
+                break;
+            case 'user':
+                state.userX = clamp(newX, 0, canvasWidth);
+                state.userY = clamp(newY, 0, canvasHeight);
+                updateRangeFromState('userX', state.userX);
+                updateRangeFromState('userY', state.userY);
+                document.getElementById('userXValue').textContent = Math.round(state.userX);
+                document.getElementById('userYValue').textContent = Math.round(state.userY);
+                break;
+            case 'group':
+                state.groupX = clamp(newX, 0, canvasWidth);
+                state.groupY = clamp(newY, 0, canvasHeight);
+                updateRangeFromState('groupX', state.groupX);
+                updateRangeFromState('groupY', state.groupY);
+                document.getElementById('groupXValue').textContent = Math.round(state.groupX);
+                document.getElementById('groupYValue').textContent = Math.round(state.groupY);
+                break;
+        }
+
+        updateCanvas();
+    }
+
+    function endDrag(e) {
+        if (isDragging) {
+            isDragging = false;
+            draggedElement = null;
+            canvas.classList.remove('dragging');
+            canvas.classList.add('canvas-draggable'); 
+        }
+    }
+
+    // Adiciona os event listeners para as interações de arrasto
+    canvas.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', doDrag);
+    window.addEventListener('mouseup', endDrag);
+
+    // Usa { passive: false } nas interações de toque para que e.preventDefault() funcione corretamente
+    if (isTouchDevice) {
+        canvas.addEventListener('touchstart', startDrag, { passive: false });
+        window.addEventListener('touchmove', doDrag, { passive: false });
+        window.addEventListener('touchend', endDrag);
+    }
+    // --- FIM DA LÓGICA DE DRAG MELHORADA PARA MOBILE ---
+
 
     const loadImageAsync = (url) => {
         return new Promise((resolve) => {
@@ -658,193 +785,22 @@
         const jsonString = JSON.stringify(config, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `canvas_config_${Date.now()}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'welcome_canvas_config.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
 
-    function getCursorTarget(mouseX, mouseY, bounds) {
-        if (hitTest(mouseX, mouseY, bounds.welcome) || hitTest(mouseX, mouseY, bounds.idbox) ||
-            hitTestCircle(mouseX, mouseY, bounds.userAvatar) || hitTestCircle(mouseX, mouseY, bounds.groupAvatar)) {
-            return 'element-draggable';
-        }
-        return 'canvas-draggable';
-    }
-
-    function handleInteractionStart(e, clientX, clientY, isTouch=false) {
-        const canvas = document.getElementById('welcomeCanvas');
-        const ctx = canvas.getContext('2d');
-        const rect = canvas.getBoundingClientRect();
-
-        const mouseCanvasX = clientX - rect.left;
-        const mouseCanvasY = clientY - rect.top;
-        const bounds = getElementBounds(ctx, getCurrentConfig());
-
-        if (hitTestCircle(mouseCanvasX, mouseCanvasY, bounds.userAvatar)) {
-            draggedElement = 'userAvatar';
-            dragOffsetX = mouseCanvasX - state.userX;
-            dragOffsetY = mouseCanvasY - state.userY;
-        } else if (hitTestCircle(mouseCanvasX, mouseCanvasY, bounds.groupAvatar)) {
-            draggedElement = 'groupAvatar';
-            dragOffsetX = mouseCanvasX - state.groupX;
-            dragOffsetY = mouseCanvasY - state.groupY;
-        } else if (hitTest(mouseCanvasX, mouseCanvasY, bounds.welcome)) {
-            draggedElement = 'welcome';
-            dragOffsetX = mouseCanvasX - state.welcomeX;
-            dragOffsetY = mouseCanvasY - state.welcomeY;
-        } else if (hitTest(mouseCanvasX, mouseCanvasY, bounds.idbox)) {
-            draggedElement = 'idbox';
-            dragOffsetX = mouseCanvasX - state.idBoxX;
-            dragOffsetY = mouseCanvasY - state.idBoxY;
-        } else {
-            // -- AQUI: bloqueia mover o canvas em dispositivos touch (mobile)
-            if (isTouchDevice && isTouch) {
-                draggedElement = null; // impede movimento do canvas em touch
-                return;
-            }
-            draggedElement = 'canvas';
-            canvasDragOffsetX = clientX - rect.left;
-            canvasDragOffsetY = clientY - rect.top;
-        }
-
-        if (draggedElement) {
-            isDragging = true;
-            canvas.classList.add('dragging');
-        }
-    }
-
-    function handleInteractionMove(clientX, clientY) {
-        const canvas = document.getElementById('welcomeCanvas');
-        const rect = canvas.getBoundingClientRect();
-
-        const mouseX = clientX - rect.left;
-        const mouseY = clientY - rect.top;
-
-        const currentConfig = getCurrentConfig();
-        const bounds = getElementBounds(canvas.getContext('2d'), currentConfig);
-
-        if (!isDragging) {
-            const cursorTarget = getCursorTarget(mouseX, mouseY, bounds);
-            if (cursorTarget === 'element-draggable') {
-                canvas.classList.remove('canvas-draggable');
-                canvas.classList.add('draggable');
-            } else if (cursorTarget === 'canvas-draggable') {
-                canvas.classList.remove('draggable');
-                canvas.classList.add('canvas-draggable');
-            } else {
-                canvas.classList.remove('draggable');
-                canvas.classList.remove('canvas-draggable');
-            }
-            return;
-        }
-
-        if (draggedElement === 'canvas') {
-            if (!canvas.classList.contains('canvas-moved')) {
-                canvas.classList.add('canvas-moved');
-                const currentTop = rect.top + window.scrollY;
-                const currentLeft = rect.left + window.scrollX;
-                canvas.style.left = `${currentLeft}px`;
-                canvas.style.top = `${currentTop}px`;
-                canvas.style.margin = '0';
-            }
-            const newLeft = clientX - canvasDragOffsetX;
-            const newTop = clientY - canvasDragOffsetY;
-            canvas.style.left = `${newLeft}px`;
-            canvas.style.top = `${newTop}px`;
-        } else if (draggedElement) {
-            let newX = mouseX - dragOffsetX;
-            let newY = mouseY - dragOffsetY;
-
-            let marginX = 50, marginY = 50;
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-
-            if (draggedElement === 'userAvatar') {
-                marginX = currentConfig.userRadius;
-                marginY = currentConfig.userRadius;
-                state.userX = Math.max(marginX, Math.min(canvasWidth - marginX, newX));
-                state.userY = Math.max(marginY, Math.min(canvasHeight - marginY, newY));
-                updateRangeFromState('userX', state.userX);
-                updateRangeFromState('userY', state.userY);
-            } else if (draggedElement === 'groupAvatar') {
-                marginX = currentConfig.groupRadius;
-                marginY = currentConfig.groupRadius;
-                state.groupX = Math.max(marginX, Math.min(canvasWidth - marginX, newX));
-                state.groupY = Math.max(marginY, Math.min(canvasHeight - marginY, newY));
-                updateRangeFromState('groupX', state.groupX);
-                updateRangeFromState('groupY', state.groupY);
-            } else if (draggedElement === 'welcome') {
-                // Margens para o texto de boas-vindas
-                const welcomeWidth = bounds.welcome.width;
-                const welcomeHeight = bounds.welcome.height;
-                state.welcomeX = Math.max(welcomeWidth / 2, Math.min(canvasWidth - welcomeWidth / 2, newX));
-                state.welcomeY = Math.max(welcomeHeight, Math.min(canvasHeight - 10, newY)); 
-            } else if (draggedElement === 'idbox') {
-                // Margens para a caixa de ID
-                const boxWidth = bounds.idbox.width;
-                const boxHeight = bounds.idbox.height;
-                state.idBoxX = Math.max(boxWidth / 2, Math.min(canvasWidth - boxWidth / 2, newX));
-                state.idBoxY = Math.max(boxHeight / 2 + 10, Math.min(canvasHeight - boxHeight / 2 - 10, newY));
-            }
-
-            updateCanvas();
-        }
-    }
-
-    function handleInteractionEnd() {
-        isDragging = false;
-        draggedElement = null;
-        const canvas = document.getElementById('welcomeCanvas');
-        canvas.classList.remove('dragging');
-        
-        // Remove 'draggable' e 'canvas-draggable' para resetar o cursor padrão se não estiver sobre um elemento
-        canvas.classList.remove('draggable');
-        canvas.classList.remove('canvas-draggable');
-    }
-    
-    // Configuração de Event Listeners
-    document.addEventListener('DOMContentLoaded', () => {
+    window.onload = () => {
         initializeState();
+        loadSelectedPanel();
         updateCanvas();
-        loadSelectedPanel(); 
-
-        const canvas = document.getElementById('welcomeCanvas');
-
-        // Mouse Events
-        canvas.addEventListener('mousedown', (e) => handleInteractionStart(e, e.clientX, e.clientY, false));
-        window.addEventListener('mousemove', (e) => handleInteractionMove(e.clientX, e.clientY));
-        window.addEventListener('mouseup', handleInteractionEnd);
-
-        // Touch Events
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                e.preventDefault(); // Evita scroll ao tentar arrastar elemento
-                handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY, true);
-            }
-        }, { passive: false });
-        
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1 && isDragging) {
-                e.preventDefault(); 
-                handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
-            }
-        }, { passive: false });
-        
-        window.addEventListener('touchend', handleInteractionEnd);
-        window.addEventListener('touchcancel', handleInteractionEnd);
-
-        // Eventos de alteração para todos os ranges/inputs que afetam o canvas
-        document.querySelectorAll('input[type="range"], input[type="text"], input[type="color"]').forEach(input => {
-            input.addEventListener('input', updateCanvas);
-        });
-
-    });
-
+        // Adiciona a classe draggable por padrão para movimentar os elementos internos
+        canvas.classList.add('canvas-draggable'); 
+    };
 </script>
-
 </body>
 </html>
