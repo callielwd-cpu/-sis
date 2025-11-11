@@ -3,256 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador Welcome</title>
+    <title>Editor de Card de Boas-Vindas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 🎨 Estilos da Aplicação e Fontes */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
-        /* Assumindo que o arquivo 'TT Runs Trial ExtraBold.ttf' esteja na mesma pasta */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        /* 🎨 MUDANÇA APLICADA AQUI: Configuração da fonte TTRuns com peso ExtraBold (800) */
         @font-face {
-            font-family: 'TTRuns';
-            src: url('TT Runs Trial ExtraBold.ttf') format('truetype');
-            font-weight: 900;
+            font-family: 'TTRunsTrialExtraBold';
+            /* Se você tiver o TT Runs Trial ExtraBold.ttf, o URL deve ser:
+               src: url('seu-caminho-para/TT Runs Trial ExtraBold.ttf') format('truetype');
+               Usei a mesma CDN que você forneceu, mas com um nome de família mais específico.
+            */
+            src: url('https://fonts.cdnfonts.com/s/32463/TT%20Runs%20Bold.woff') format('woff');
+            font-weight: 800; /* ExtraBold geralmente é 800 */
             font-style: normal;
-            font-display: swap;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            /* 🟢 NOVO: Fundo principal do WhatsApp Dark */
-            background-color: #374151; 
+            background-color: #101d25;
+            color: #e9edef;
+        }
+
+        .panel {
+            display: none;
+            padding: 1rem;
+            border-top: 1px solid #374151;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .range-container {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            padding: 20px;
-            min-height: 100vh;
+            margin-bottom: 0.5rem;
         }
 
-        @media (min-width: 768px) {
-            body {
-                flex-direction: row;
-                align-items: flex-start;
-                justify-content: center;
-                gap: 2rem;
-            }
+        .range-container label {
+            width: 150px;
+            font-size: 0.875rem;
         }
 
-        /* Estilos do Canvas */
+        .range-container input[type="range"] {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+
+        .range-container span {
+            width: 40px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px dashed #374151;
+            font-size: 0.875rem;
+        }
+
+        /* Estilos do Canvas para arrasto */
         #welcomeCanvas {
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            max-width: 100%;
-            height: auto;
-            cursor: default;
-            z-index: 10;
-            touch-action: none; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            touch-action: none; /* Impede o scroll touch ao arrastar */
         }
-        /* Cursores para o Modo Mover */
-        #welcomeCanvas.canvas-draggable { cursor: grab; }
-        #welcomeCanvas.dragging { cursor: grabbing; }
-
-        /* Estilos de Controles */
-        .container {
-            width: 100%;
-            max-width: 450px;
-            z-index: 20;
-            /* 🟢 NOVO: Fundo dos painéis (Um pouco mais claro que o body) */
-            background-color: #232D36;
-            padding-bottom: 20px;
-        }
-
-        .input-group { margin-bottom: 10px; }
-        .color-control { display: flex; align-items: center; }
-        .color-input-hex { width: 80px; text-align: center; margin-left: 8px; text-transform: uppercase; }
         
-        .block-select { 
-            width: 100%; 
-            padding: .5rem; 
-            border-radius: .5rem; 
-            /* 🟢 NOVO: Fundo de inputs (Mais escuro) */
-            background: #101D25; 
-            /* 🟢 NOVO: Cor de texto principal (Claro) */
-            color: #E9EDEF; 
-            /* 🟢 NOVO: Borda/Separador */
-            border: 1px solid #374151; 
+        .canvas-draggable {
+            cursor: grab;
         }
-        .panel { display: none; }
-        .panel.active { display: block; }
-        .summary-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 8px 0; 
-            /* 🟢 NOVO: Separador */
-            border-bottom: 1px dashed #374151;
+        
+        .dragging {
+            cursor: grabbing !important;
         }
-        .summary-item:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="md:flex md:flex-row md:items-start md:justify-center md:gap-8">
+<body class="p-4">
 
-<div class="container bg-gray-700 p-6 rounded-lg shadow-xl mb-6">
-    <h1 class="text-2xl font-bold mb-4 text-white">Mensagens de <span style="color:#7289da;">Boas-vindas</span> em grupos</h1>
-
-    <div class="mb-4">
-        <label for="panelSelect" class="block text-gray-200 mb-2">Selecionar bloco de ajustes:</label>
-        <select id="panelSelect" class="block-select" onchange="onPanelChange()">
-            <option value="panel-background">Background 🖼️</option>
-            <option value="panel-text">Texto & Cores 🎨</option>
-            <option value="panel-position">Posição & Tamanho ⚙️</option>
-            <option value="panel-summary">Resumo dos Ajustes 📋</option>
-        </select>
-    </div>
-
-    <div id="panel-background" class="panel active">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div class="input-group">
-                <label for="userPicUrlInput" class="block text-gray-200 mb-1">URL,Usuário=estaitco🎨:</label>
-                <input type="text" id="userPicUrlInput" value="https://i.ibb.co/yFhsWR4v/lua.gif" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
-            </div>
-            <div class="input-group">
-                <label for="groupPicUrlInput" class="block text-gray-200 mb-1">URL,Grupo=estaitco🎨:</label>
-                <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/CKWjkPWy/si.jpg" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
-            </div>
-        </div>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="bgUrlInput" class="block text-gray-200 mb-1">URL do Plano de Fundo (Opcional):</label>
-                <input type="text" id="bgUrlInput" value="false" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
-            </div>
-            <div>
-                <label for="bgColorInput" class="block text-gray-200 mb-1">Cor Sólida de Fundo:</label>
-                <div class="color-control">
-                    <input type="color" id="bgColorInput" value="#0B1323" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'bgColorHex'); updateCanvas()">
-                    <input type="text" id="bgColorHex" value="#36393F" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'bgColorInput'); updateCanvas()">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="panel-text" class="panel">
-        <div class="mt-4 border-t pt-4 border-gray-700">
-            <h2 class="text-xl font-bold text-purple-400 mb-4">Ajustes de Texto e Cores</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="input-group">
-                    <label for="welcomeTextInput" class="block text-gray-200 mb-1">
-                        Texto de Boas-Vindas:
-                        <span class="text-xs text-blue-400 ml-2">X:<span id="welcomeXValue">450</span> Y:<span id="welcomeYValue">230</span></span>
-                    </label>
-                    <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" class="w-full p-2 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="updateCanvas()">
-                </div>
-                <div class="input-group">
-                    <label for="welcomeColorInput" class="block text-gray-200 mb-1">Cor do Texto de Boas-Vindas:</label>
-                    <div class="color-control">
-                        <input type="color" id="welcomeColorInput" value="#FFFFFF" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'welcomeColorHex'); updateCanvas()">
-                        <input type="text" id="welcomeColorHex" value="#FFFFFF" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'welcomeColorInput'); updateCanvas()">
-                    </div>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                <div class="input-group">
-                    <label for="groupNameColorInput" class="block text-gray-200 mb-1">Cor do Nome do Grupo:</label>
-                    <div class="color-control">
-                        <input type="color" id="groupNameColorInput" value="#FFD900" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'groupNameColorHex'); updateCanvas()">
-                        <input type="text" id="groupNameColorHex" value="#FFD900" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'groupNameColorInput'); updateCanvas()">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="idBoxColorInput" class="block text-gray-200 mb-1">
-                        Cor do Box de ID:
-                        <span class="text-xs text-blue-400 ml-2">X:<span id="idBoxXValue">450</span> Y:<span id="idBoxYValue">310</span></span>
-                    </label>
-                    <div class="color-control">
-                        <input type="color" id="idBoxColorInput" value="#454545" class="color-picker rounded bg-gray-900 border border-gray-600 cursor-pointer" oninput="syncColorInputs(this, 'idBoxColorHex'); updateCanvas()">
-                        <input type="text" id="idBoxColorHex" value="#000000" maxlength="7" class="color-input-hex p-1 rounded bg-gray-900 border border-gray-600 text-gray-200" oninput="syncColorInputs(this, 'idBoxColorInput'); updateCanvas()">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="panel-position" class="panel">
-        <div class="mt-6 border-t pt-4 border-gray-700">
-            <h2 class="text-xl font-bold text-blue-400 mb-4">Ajustes de Posição e Tamanho (Canvas 900x350px)</h2>
-
-            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-4">Texto de Boas-Vindas (Tamanho)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-1">
-                    <label for="welcomeFontSize" class="block text-gray-400 text-xs mb-1">Tamanho da Fonte: <span id="welcomeFontSizeValue">50</span>px</label>
-                    <input type="range" id="welcomeFontSize" min="20" max="100" value="50" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-            </div>
-            <hr class="mt-4 border-gray-700">
-            
-            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-4">Foto do Usuário (Maior)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label for="userRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="userRadiusValue">66</span>px</label>
-                    <input type="range" id="userRadius" min="50" max="150" value="66" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-                <div>
-                    <label for="userX" class="block text-gray-400 text-xs mb-1">Posição X: <span id="userXValue">437</span>px</label>
-                    <input type="range" id="userX" min="50" max="850" value="437" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-                <div>
-                    <label for="userY" class="block text-gray-400 text-xs mb-1">Posição Y: <span id="userYValue">110</span>px</label>
-                    <input type="range" id="userY" min="50" max="300" value="110" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-            </div>
-
-            <h3 class="text-lg font-semibold text-gray-200 mb-2 mt-6">Foto do Grupo (Menor)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label for="groupRadius" class="block text-gray-400 text-xs mb-1">Raio (Tamanho): <span id="groupRadiusValue">35</span>px</label>
-                    <input type="range" id="groupRadius" min="20" max="100" value="35" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-                <div>
-                    <label for="groupX" class="block text-gray-400 text-xs mb-1">Posição X: <span id="groupXValue">655</span>px</label>
-                    <input type="range" id="groupX" min="20" max="880" value="655" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-                <div>
-                    <label for="groupY" class="block text-gray-400 text-xs mb-1">Posição Y: <span id="groupYValue">300</span>px</label>
-                    <input type="range" id="groupY" min="20" max="330" value="300" class="w-full h-2 bg-gray-600 rounded-lg" oninput="updateCanvas()">
-                </div>
-            </div>
-
-            <p class="text-sm text-gray-500 mt-4">Dica: Use o botão **"Ativar Modo Mover"** abaixo para arrastar todos os elementos diretamente no Canvas!</p>
-        </div>
-    </div>
+    <h1 class="text-3xl font-bold mb-6 text-center text-white">🎨 Editor de Card de <span style="color:#7289da;">Boas-Vindas</span> em grupos</h1>
     
-    <div id="panel-summary" class="panel">
-        <div class="mt-6 border-t pt-4 border-gray-700">
-            <h2 class="text-xl font-bold text-green-400 mb-4">Resumo dos Ajustes (Canvas 900x350px)</h2>
-            <div id="summary-content" class="text-sm text-gray-200 bg-gray-900 p-4 rounded-lg">
-                Carregando resumo...
-            </div>
-            <p class="text-xs text-gray-500 mt-4">As posições são coordenadas (X, Y) do centro de cada elemento.</p>
-        </div>
+    <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
         
-        <div class="mt-4">
-            <button id="exportButton" 
-        onclick="exportConfigAsJson()" 
-        class="w-full font-bold py-2 px-4 rounded-lg hover:opacity-90" 
-        style="background-color:#00B09C; color: #101D25;"
-    >
-        Exportar Config (.json)
+        <div class="lg:w-2/3 bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col items-center">
+            <h2 class="text-xl font-semibold mb-3">Pré-visualização do Card (900x350)</h2>
+            <canvas id="welcomeCanvas" width="900" height="350" class="w-full lg:w-[900px] h-auto max-h-[350px]"></canvas>
+            
+            <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 mt-4 w-full lg:w-96">
+                Ativar Modo Mover
             </button>
         </div>
-    </div>
 
-    <div class="mt-4 flex gap-2">
-        <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="w-full font-bold py-2 px-4 rounded-lg" style="background-color:#00B09C; color: #101D25;">
-            Ativar Modo Mover
-        </button>
-        <button onclick="saveSelectedPanelToStorage()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aba Atual</button>
-    </div>
-</div>
+        <div class="lg:w-1/3 bg-gray-900 p-6 rounded-xl shadow-lg">
+            
+            <div class="mb-4">
+                <label for="panelSelect" class="block text-sm font-medium mb-1">Selecione o Painel de Ajustes:</label>
+                <select id="panelSelect" onchange="onPanelChange()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="panel-background">Background 🖼️</option>
+                    <option value="panel-positions">Posicionamento (X, Y) ⚙️</option>
+                    <option value="panel-text">Texto e Cores 🎨</option>
+                    <option value="panel-summary">Resumo dos Ajustes 👁️‍🗨️</option>
+                </select>
+            </div>
+            
+            <div id="panel-background" class="panel active">
+                <h3 class="text-lg font-bold mb-3">🖼️ Background</h3>
+                <div class="mb-3">
+                    <label for="bgUrlInput" class="block text-sm font-medium mb-1">URL da Imagem de Fundo (ou 'false'):</label>
+                    <input type="text" id="bgUrlInput" value="false" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
+                </div>
+                <div class="mb-3">
+                    <label for="bgColorInput" class="block text-sm font-medium mb-1">Cor Sólida de Fundo (HEX):</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="bgColorInput" value="#0b1323" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
+                        <input type="text" id="bgColorHex" value="#0b1323" oninput="document.getElementById('bgColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
+                    </div>
+                </div>
+                <hr class="border-gray-700 my-4">
+                
+                <h4 class="font-semibold mb-2">Avatares</h4>
+                <div class="mb-3">
+                    <label for="userPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil usuario:</label>
+                    <input type="text" id="userPicUrlInput" value="https://i.ibb.co/N6nNsRYf/lua.gif" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
+                </div>
+                <div class="range-container">
+                    <label for="userRadius">Raio Usuário:</label>
+                    <input type="range" id="userRadius" min="10" max="100" value="66" step="1" oninput="updateCanvas()">
+                    <span id="userRadiusValue">66</span>
+                </div>
+                <div class="mb-3 mt-4">
+                    <label for="groupPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil grupo:</label>
+                    <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/PsV0zCTw/si.jpg" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
+                </div>
+                <div class="range-container">
+                    <label for="groupRadius">Raio Grupo:</label>
+                    <input type="range" id="groupRadius" min="10" max="100" value="35" step="1" oninput="updateCanvas()">
+                    <span id="groupRadiusValue">35</span>
+                </div>
+            </div>
 
-<canvas id="welcomeCanvas" width="900" height="350" class="shadow-2xl"></canvas>
+            <div id="panel-positions" class="panel">
+                <h3 class="text-lg font-bold mb-3">📍 Posições Centrais (0-900 / 0-350)</h3>
+                
+                <h4 class="font-semibold mb-2 mt-4">Avatar do Usuário</h4>
+                <div class="range-container">
+                    <label for="userX">Posição X:</label>
+                    <input type="range" id="userX" min="0" max="900" value="437" step="1" oninput="updateCanvas()">
+                    <span id="userXValue">437</span>
+                </div>
+                <div class="range-container">
+                    <label for="userY">Posição Y:</label>
+                    <input type="range" id="userY" min="0" max="350" value="110" step="1" oninput="updateCanvas()">
+                    <span id="userYValue">110</span>
+                </div>
+
+                <h4 class="font-semibold mb-2 mt-4">Avatar do Grupo</h4>
+                <div class="range-container">
+                    <label for="groupX">Posição X:</label>
+                    <input type="range" id="groupX" min="0" max="900" value="655" step="1" oninput="updateCanvas()">
+                    <span id="groupXValue">655</span>
+                </div>
+                <div class="range-container">
+                    <label for="groupY">Posição Y:</label>
+                    <input type="range" id="groupY" min="0" max="350" value="300" step="1" oninput="updateCanvas()">
+                    <span id="groupYValue">300</span>
+                </div>
+                
+                <h4 class="font-semibold mb-2 mt-4">Texto de Boas-Vindas (Arrastável)</h4>
+                <div class="range-container">
+                    <label>Posição X:</label>
+                    <span id="welcomeXValue">450</span>
+                </div>
+                <div class="range-container">
+                    <label>Posição Y:</label>
+                    <span id="welcomeYValue">230</span>
+                </div>
+
+                <h4 class="font-semibold mb-2 mt-4">Box ID (Arrastável)</h4>
+                <div class="range-container">
+                    <label>Posição X:</label>
+                    <span id="idBoxXValue">450</span>
+                </div>
+                <div class="range-container">
+                    <label>Posição Y:</label>
+                    <span id="idBoxYValue">310</span>
+                </div>
+            </div>
+
+            <div id="panel-text" class="panel">
+                <h3 class="text-lg font-bold mb-3">🔠 Texto e Cores</h3>
+                
+                <div class="mb-3">
+                    <label for="welcomeTextInput" class="block text-sm font-medium mb-1">Texto de Boas-Vindas:</label>
+                    <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
+                </div>
+                <div class="range-container mb-3">
+                    <label for="welcomeFontSize">Tamanho da Fonte:</label>
+                    <input type="range" id="welcomeFontSize" min="20" max="100" value="50" step="1" oninput="updateCanvas()">
+                    <span id="welcomeFontSizeValue">50</span>
+                </div>
+                <div class="mb-3">
+                    <label for="welcomeColorInput" class="block text-sm font-medium mb-1">Cor do Texto (Welcome):</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="welcomeColorInput" value="#ffffff" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
+                        <input type="text" id="welcomeColorHex" value="#ffffff" oninput="document.getElementById('welcomeColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
+                    </div>
+                </div>
+                
+                <hr class="border-gray-700 my-4">
+                
+                <div class="mb-3">
+                    <label for="groupNameColorInput" class="block text-sm font-medium mb-1">Cor do Nome do Grupo:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="groupNameColorInput" value="#ffd900" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
+                        <input type="text" id="groupNameColorHex" value="#ffd900" oninput="document.getElementById('groupNameColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
+                    </div>
+                </div>
+
+                <hr class="border-gray-700 my-4">
+                
+                <div class="mb-3">
+                    <label for="idBoxColorInput" class="block text-sm font-medium mb-1">Cor do Box ID:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="idBoxColorInput" value="#454545" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
+                        <input type="text" id="idBoxColorHex" value="#454545" oninput="document.getElementById('idBoxColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-summary" class="panel">
+                <h3 class="text-lg font-bold mb-3">📊 Resumo dos Ajustes</h3>
+                <div id="summary-content" class="mb-4 bg-gray-800 p-3 rounded-md">
+                    Carregando resumo...
+                </div>
+                
+                <button onclick="copyConfigAsJson()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
+                    📋 Copiar JSON para a Área de Transferência
+                </button>
+                <button onclick="exportConfigAsJson()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
+                    ⬇️ Exportar Config (.json)
+                </button>
+            </div>
+            
+        </div>
+    </div>
 
 <script>
-    const FIXED_USER_NAME = 'João_Victor#1234';
-    const FIXED_GROUP_NAME = 'Grup lexi✨';
+    const FIXED_USER_NAME = 'Sarah_Jones#7489';
+    const FIXED_GROUP_NAME = 'Grup ísis✨';
     const USER_FALLBACK_COLOR = '#43B581';
     const GROUP_FALLBACK_COLOR = '#ED4245';
     const STORAGE_SELECTED_PANEL_KEY = 'welcome_canvas_selected_panel';
@@ -264,9 +265,10 @@
     let activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
     // ----------------------------------------
 
+    /* 🎨 MUDANÇA APLICADA AQUI: Alterando o nome da fonte para o novo nome/peso */
     const getWelcomeFont = () => {
         const size = document.getElementById('welcomeFontSize').value;
-        return `900 ${size}px TTRuns, sans-serif`;
+        return `800 ${size}px TTRunsTrialExtraBold, sans-serif`; 
     };
     const DEFAULT_FONT = '28px Inter, sans-serif';
 
@@ -290,12 +292,10 @@
     const ctx = canvas.getContext('2d');
 
     function initializeState() {
-        // Inicializa o estado com base nos valores iniciais dos inputs
         state.userX = parseInt(document.getElementById('userX').value);
         state.userY = parseInt(document.getElementById('userY').value);
         state.groupX = parseInt(document.getElementById('groupX').value);
         state.groupY = parseInt(document.getElementById('groupY').value);
-        // Coordenadas fixas ou iniciais para texto/box
         state.welcomeX = 450; 
         state.welcomeY = 230;
         state.idBoxX = 450;
@@ -338,7 +338,6 @@
             const imgRatio = imgWidth / imgHeight;
             const targetRatio = 1;
 
-            // Lógica de "Cover" para cortar a imagem para o círculo
             if (imgRatio > targetRatio) {
                 sHeight = imgHeight;
                 sWidth = imgHeight * targetRatio;
@@ -379,11 +378,9 @@
         const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
         const ID_TEXT = FIXED_USER_NAME;
 
-        // Bounds para Avatares (Raio é importante)
         const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
         const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
 
-        // Bounds para Texto de Boas-Vindas
         const fontSize = document.getElementById('welcomeFontSize').value;
         ctx.font = getWelcomeFont();
         const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
@@ -396,7 +393,6 @@
             height: welcomeHeight 
         };
 
-        // Bounds para ID Box
         ctx.font = DEFAULT_FONT;
         const idMetrics = ctx.measureText(ID_TEXT);
         const boxPaddingX = 20;
@@ -462,7 +458,7 @@
         canvas.classList.add('dragging');
     }
 
-    // 🟢 FUNÇÃO DRAG MODIFICADA PARA INCLUIR SMART GUIDES
+    // 🟢 FUNÇÃO DRAG COM SMART GUIDES
     function drag(e) {
         if (!isDragging) return;
         e.preventDefault();
@@ -501,13 +497,11 @@
             const targetX = elementCenters[otherElement].x;
             const targetY = elementCenters[otherElement].y;
 
-            // Alinhamento horizontal (Y)
             if (Math.abs(newY - targetY) < ALIGN_TOLERANCE) {
                 newY = targetY;
                 activeGuides.alignY = targetY;
             }
 
-            // Alinhamento vertical (X)
             if (Math.abs(newX - targetX) < ALIGN_TOLERANCE) {
                 newX = targetX;
                 activeGuides.alignX = targetX;
@@ -546,7 +540,6 @@
             isDragging = false;
             draggedElement = null;
             canvas.classList.remove('dragging');
-            // Remove as guias ativas ao parar de arrastar
             activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null }; 
             updateCanvas(); 
         }
@@ -567,38 +560,37 @@
 
         ctx.save();
         ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]); // Linha tracejada
+        ctx.setLineDash([5, 5]);
 
-        // Guia Central Vertical do Canvas
+        // Guia Central Vertical do Canvas (Amarelo)
         if (activeGuides.centerX) {
-            ctx.strokeStyle = '#FFD900'; // Amarelo
+            ctx.strokeStyle = '#FFD900';
             ctx.beginPath();
             ctx.moveTo(CANVAS_CENTER_X, 0);
             ctx.lineTo(CANVAS_CENTER_X, canvas.height);
             ctx.stroke();
         }
 
-        // Guia Central Horizontal do Canvas
+        // Guia Central Horizontal do Canvas (Amarelo)
         if (activeGuides.centerY) {
-            ctx.strokeStyle = '#FFD900'; // Amarelo
+            ctx.strokeStyle = '#FFD900';
             ctx.beginPath();
             ctx.moveTo(0, CANVAS_CENTER_Y);
             ctx.lineTo(canvas.width, CANVAS_CENTER_Y);
             ctx.stroke();
         }
 
-        // Guia de Alinhamento Vertical (X) entre elementos
+        // Guia de Alinhamento entre elementos (Verde)
         if (activeGuides.alignX !== null) {
-            ctx.strokeStyle = '#00B09C'; // Verde
+            ctx.strokeStyle = '#00B09C';
             ctx.beginPath();
             ctx.moveTo(activeGuides.alignX, 0);
             ctx.lineTo(activeGuides.alignX, canvas.height);
             ctx.stroke();
         }
 
-        // Guia de Alinhamento Horizontal (Y) entre elementos
         if (activeGuides.alignY !== null) {
-            ctx.strokeStyle = '#00B09C'; // Verde
+            ctx.strokeStyle = '#00B09C';
             ctx.beginPath();
             ctx.moveTo(0, activeGuides.alignY);
             ctx.lineTo(canvas.width, activeGuides.alignY);
@@ -650,7 +642,8 @@
 
         const canvasWidth = canvas.width; const canvasHeight = canvas.height;
 
-        try { await document.fonts.load(`900 100px TTRuns`); } catch (err) { /* Falha silenciosa */ }
+        /* 🎨 MUDANÇA APLICADA AQUI: Carregamento da fonte com o novo nome */
+        try { await document.fonts.load(`800 100px TTRunsTrialExtraBold`); } catch (err) { /* Falha silenciosa */ }
 
         // Carregamento de Imagens
         const [bgImage, userPicData, groupPicData] = await Promise.all([
@@ -730,7 +723,7 @@
         ctx.font = DEFAULT_FONT;
         ctx.fillText(ID_TEXT, idBoxX, textBaselineY);
 
-        // 🚨 Desenha as guias inteligentes POR CIMA de todos os elementos
+        // Desenha as guias inteligentes POR CIMA
         drawSmartGuides();
     }
     
@@ -754,134 +747,149 @@
             welcomeX: Math.round(state.welcomeX),
             welcomeY: Math.round(state.welcomeY),
             idBoxX: Math.round(state.idBoxX),
-            idBoxY: Math.round(state.idBoxY)
+            idBoxY: Math.round(state.idBoxY),
         };
-    }
-
-    function syncColorInputs(sourceInput, targetId) {
-        const targetInput = document.getElementById(targetId);
-        let value = sourceInput.value.toUpperCase();
-
-        if (targetId.includes('Hex')) {
-            if (!value.startsWith('#')) { value = '#' + value; }
-            targetInput.value = value;
-        } else {
-            targetInput.value = value;
-        }
     }
 
     function updateRangeFromState(id, value) {
         const input = document.getElementById(id);
-        if (input) {
+        const valueSpan = document.getElementById(id + 'Value');
+        if (input && valueSpan) {
             input.value = Math.round(value);
+            valueSpan.textContent = Math.round(value);
+        }
+    }
+    
+    function updateCanvas() {
+        // Sincronizar sliders com spans
+        ['userRadius', 'groupRadius', 'welcomeFontSize'].forEach(id => {
+            document.getElementById(id + 'Value').textContent = document.getElementById(id).value;
+        });
+        
+        // Sincronizar cor picker com hex input
+        const bgColorInput = document.getElementById('bgColorInput');
+        document.getElementById('bgColorHex').value = bgColorInput.value;
+
+        // Sincronizar posições arrastáveis
+        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
+        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
+        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
+        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
+        
+        // Atualizar canvas
+        drawWelcomeCanvas(getCurrentConfig());
+
+        // Atualizar resumo (se o painel estiver ativo)
+        if (document.getElementById('panel-summary').classList.contains('active')) {
+            updateSummary();
         }
     }
 
-    // --- FUNÇÕES DE PAINEL E RESUMO ---
-
-    function updateSummaryPanel() {
+    function updateSummary() {
         const config = getCurrentConfig();
-        const contentDiv = document.getElementById('summary-content');
-        contentDiv.innerHTML = `
-            <div class="summary-item"><span>Fundo:</span> <strong>${config.bgUrl === 'false' ? config.bgColor : 'URL Personalizada'}</strong></div>
-            <div class="summary-item"><span>Texto Boas-Vindas:</span> <strong>${config.welcomeText}</strong></div>
-            <div class="summary-item"><span>Cor do Texto:</span> <span style="color: ${config.welcomeColor}">${config.welcomeColor}</span></div>
-            <div class="summary-item"><span>Cor Nome Grupo:</span> <span style="color: ${config.groupNameColor}">${config.groupNameColor}</span></div>
-            <div class="summary-item"><span>Tamanho Fonte:</span> <strong>${config.welcomeFontSize}px</strong></div>
-            <div class="summary-item"><span>Cor Box ID:</span> <strong>${config.idBoxColor}</strong></div>
-            <div class="summary-item"><span>--- Posições Centrais ---</span> <span></span></div>
-            <div class="summary-item"><span>Foto Usuário (X, Y):</span> <strong>(${config.userX}, ${config.userY})</strong></div>
-            <div class="summary-item"><span>Foto Grupo (X, Y):</span> <strong>(${config.groupX}, ${config.groupY})</strong></div>
-            <div class="summary-item"><span>Texto Welcome (X, Y):</span> <strong>(${config.welcomeX}, ${config.welcomeY})</strong></div>
-            <div class="summary-item"><span>Box ID (X, Y):</span> <strong>(${config.idBoxX}, ${config.idBoxY})</strong></div>
-            <div class="summary-item"><span>Raio Usuário/Grupo:</span> <strong>${config.userRadius}px / ${config.groupRadius}px</strong></div>
+        const summary = `
+            <div class="summary-item"><span>Fundo URL:</span> <span>${config.bgUrl}</span></div>
+            <div class="summary-item"><span>Fundo Cor:</span> <span>${config.bgColor}</span></div>
+            <div class="summary-item"><span>Texto Boas-Vindas:</span> <span>${config.welcomeText}</span></div>
+            <div class="summary-item"><span>Cor Welcome:</span> <span>${config.welcomeColor}</span></div>
+            <div class="summary-item"><span>Cor Nome Grupo:</span> <span>${config.groupNameColor}</span></div>
+            <div class="summary-item"><span>Cor Box ID:</span> <span>${config.idBoxColor}</span></div>
+            <div class="summary-item"><span>Raio Usuário:</span> <span>${config.userRadius}px</span></div>
+            <div class="summary-item"><span>Raio Grupo:</span> <span>${config.groupRadius}px</span></div>
+            <div class="summary-item"><span>Tamanho Fonte:</span> <span>${config.welcomeFontSize}px</span></div>
+            <hr class="border-gray-700 my-2">
+            <div class="summary-item"><span>Posição User (X, Y):</span> <span>${config.userX}, ${config.userY}</span></div>
+            <div class="summary-item"><span>Posição Group (X, Y):</span> <span>${config.groupX}, ${config.groupY}</span></div>
+            <div class="summary-item"><span>Posição Welcome (X, Y):</span> <span>${config.welcomeX}, ${config.welcomeY}</span></div>
+            <div class="summary-item"><span>Posição ID Box (X, Y):</span> <span>${config.idBoxX}, ${config.idBoxY}</span></div>
         `;
+        document.getElementById('summary-content').innerHTML = summary;
     }
 
+    function copyConfigAsJson() {
+        const config = getCurrentConfig();
+        
+        // 🚀 MUDANÇA APLICADA AQUI: O terceiro argumento é '0' (ou omitido) para nenhuma identação/linha nova.
+        const jsonConfig = JSON.stringify(config); 
+        
+        navigator.clipboard.writeText(jsonConfig).then(() => {
+            alert('JSON da configuração copiado para a área de transferência! (Formato de linha única)');
+        }).catch(err => {
+            console.error('Falha ao copiar:', err);
+            alert('Falha ao copiar. Veja o console para detalhes.');
+        });
+    }
+
+    function exportConfigAsJson() {
+        const config = getCurrentConfig();
+        
+        // 🚀 MUDANÇA APLICADA AQUI: O terceiro argumento é '0' (ou omitido).
+        const jsonConfig = JSON.stringify(config); 
+        
+        const blob = new Blob([jsonConfig], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'welcome_card_config.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
     function onPanelChange() {
         const selectedPanelId = document.getElementById('panelSelect').value;
         document.querySelectorAll('.panel').forEach(panel => {
             panel.classList.remove('active');
         });
         document.getElementById(selectedPanelId).classList.add('active');
-        if (selectedPanelId === 'panel-summary') {
-            updateSummaryPanel();
-        }
-    }
-
-    function loadSelectedPanel() {
-        const savedPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY) || 'panel-background';
-        document.getElementById('panelSelect').value = savedPanelId;
-        onPanelChange();
-    }
-
-    function saveSelectedPanelToStorage() {
-        const selectedPanelId = document.getElementById('panelSelect').value;
         localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedPanelId);
-        alert(`Aba "${document.querySelector(`#panelSelect option[value='${selectedPanelId}']`).textContent.trim()}" salva!`);
+        
+        if (selectedPanelId === 'panel-summary') {
+            updateSummary();
+        }
     }
     
-    function exportConfigAsJson() {
-        const config = getCurrentConfig();
-        const jsonConfig = JSON.stringify(config, null, 2);
-        const blob = new Blob([jsonConfig], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'welcome_config.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-
-    // --- FUNÇÃO DE ATUALIZAÇÃO E INICIALIZAÇÃO ---
-
-    function updateCanvas() {
-        if (!isDragging) {
-            // Sincroniza ranges com o state (se não estiver arrastando)
-            state.userX = parseInt(document.getElementById('userX').value);
-            state.userY = parseInt(document.getElementById('userY').value);
-            state.groupX = parseInt(document.getElementById('groupX').value);
-            state.groupY = parseInt(document.getElementById('groupY').value);
+    function loadSavedPanel() {
+        const savedPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY);
+        if (savedPanelId && document.getElementById(savedPanelId)) {
+            document.getElementById('panelSelect').value = savedPanelId;
+            onPanelChange();
+        } else {
+            document.getElementById('panel-background').classList.add('active');
         }
-
-        // Sincronizar todos os campos de texto X/Y
-        document.getElementById('userXValue').textContent = Math.round(state.userX);
-        document.getElementById('userYValue').textContent = Math.round(state.userY);
-        document.getElementById('groupXValue').textContent = Math.round(state.groupX);
-        document.getElementById('groupYValue').textContent = Math.round(state.groupY);
-        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
-        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
-        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
-        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-        
-        // Sincronizar cores e ranges
-        syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
-        syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
-        syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
-        syncColorInputs(document.getElementById('idBoxColorInput'), 'idBoxColorHex');
-
-        document.getElementById('userRadiusValue').textContent = document.getElementById('userRadius').value;
-        document.getElementById('groupRadiusValue').textContent = document.getElementById('groupRadius').value;
-        document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
-        
-        drawWelcomeCanvas(getCurrentConfig());
-        updateSummaryPanel();
     }
 
-
-    // Inicialização ao carregar a página
+    // Inicialização
     window.onload = () => {
         initializeState();
-        loadSelectedPanel(); 
+        loadSavedPanel();
         updateCanvas();
-        // Ajuste inicial do botão de mover
-        document.getElementById('toggleMoveModeButton').style.backgroundColor = '#374151';
-        document.getElementById('toggleMoveModeButton').style.color = '#E9EDEF';
+        
+        // Sincronizar ranges com spans no carregamento
+        ['userRadius', 'groupRadius', 'userX', 'userY', 'groupX', 'groupY', 'welcomeFontSize'].forEach(id => {
+             document.getElementById(id).oninput();
+        });
+        
+        // Sincronizar cor hex com color picker
+        document.getElementById('bgColorInput').addEventListener('input', () => {
+            document.getElementById('bgColorHex').value = document.getElementById('bgColorInput').value.toUpperCase();
+            updateCanvas();
+        });
+        document.getElementById('welcomeColorInput').addEventListener('input', () => {
+            document.getElementById('welcomeColorHex').value = document.getElementById('welcomeColorInput').value.toUpperCase();
+            updateCanvas();
+        });
+        document.getElementById('groupNameColorInput').addEventListener('input', () => {
+            document.getElementById('groupNameColorHex').value = document.getElementById('groupNameColorInput').value.toUpperCase();
+            updateCanvas();
+        });
+        document.getElementById('idBoxColorInput').addEventListener('input', () => {
+            document.getElementById('idBoxColorHex').value = document.getElementById('idBoxColorInput').value.toUpperCase();
+            updateCanvas();
+        });
+
     };
-    
 </script>
 </body>
 </html>
