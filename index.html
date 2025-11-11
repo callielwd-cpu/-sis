@@ -256,6 +256,13 @@
     const USER_FALLBACK_COLOR = '#43B581';
     const GROUP_FALLBACK_COLOR = '#ED4245';
     const STORAGE_SELECTED_PANEL_KEY = 'welcome_canvas_selected_panel';
+    
+    // 🟢 Constantes para Smart Guides
+    const ALIGN_TOLERANCE = 5; // Tolerância de pixels para o alinhamento
+    const CANVAS_CENTER_X = 450;
+    const CANVAS_CENTER_Y = 175;
+    let activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
+    // ----------------------------------------
 
     const getWelcomeFont = () => {
         const size = document.getElementById('welcomeFontSize').value;
@@ -283,203 +290,19 @@
     const ctx = canvas.getContext('2d');
 
     function initializeState() {
+        // Inicializa o estado com base nos valores iniciais dos inputs
         state.userX = parseInt(document.getElementById('userX').value);
         state.userY = parseInt(document.getElementById('userY').value);
         state.groupX = parseInt(document.getElementById('groupX').value);
         state.groupY = parseInt(document.getElementById('groupY').value);
+        // Coordenadas fixas ou iniciais para texto/box
         state.welcomeX = 450; 
         state.welcomeY = 230;
         state.idBoxX = 450;
         state.idBoxY = 310;
     }
 
-    // --- FUNÇÕES DE ARRASTO ---
-    function getMousePos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return {
-            x: (clientX - rect.left) * scaleX,
-            y: (clientY - rect.top) * scaleY
-        };
-    }
-
-    function startDrag(e) {
-        if (!isMoveModeActive) {
-            if (e.touches) { e.preventDefault(); }
-            return; 
-        }
-
-        e.preventDefault(); 
-        
-        const pos = getMousePos(e);
-        // Garante que o raio correto seja pego para o hit test
-        const bounds = getElementBounds(ctx, getCurrentConfig()); 
-
-        if (hitTest(pos.x, pos.y, bounds.idbox)) {
-            draggedElement = 'idBox';
-            dragOffsetX = pos.x - state.idBoxX;
-            dragOffsetY = pos.y - state.idBoxY;
-        } else if (hitTest(pos.x, pos.y, bounds.welcome)) {
-            draggedElement = 'welcomeText';
-            dragOffsetX = pos.x - state.welcomeX;
-            dragOffsetY = pos.y - state.welcomeY;
-        } 
-        // Correção de hit test para os perfis circulares
-        else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
-            draggedElement = 'userAvatar';
-            dragOffsetX = pos.x - state.userX;
-            dragOffsetY = pos.y - state.userY;
-        } 
-        else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
-            draggedElement = 'groupAvatar';
-            dragOffsetX = pos.x - state.groupX;
-            dragOffsetY = pos.y - state.groupY;
-        } else {
-            draggedElement = null;
-            return;
-        }
-
-        isDragging = true;
-        canvas.classList.add('dragging');
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-        e.preventDefault();
-
-        const pos = getMousePos(e);
-        const newX = pos.x - dragOffsetX;
-        const newY = pos.y - dragOffsetY;
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-
-        switch (draggedElement) {
-            case 'userAvatar':
-                state.userX = Math.max(50, Math.min(canvasWidth - 50, newX));
-                state.userY = Math.max(50, Math.min(canvasHeight - 50, newY));
-                updateRangeFromState('userX', state.userX);
-                updateRangeFromState('userY', state.userY);
-                break;
-            case 'groupAvatar':
-                state.groupX = Math.max(20, Math.min(canvasWidth - 20, newX));
-                state.groupY = Math.max(20, Math.min(canvasHeight - 20, newY));
-                updateRangeFromState('groupX', state.groupX);
-                updateRangeFromState('groupY', state.groupY);
-                break;
-            case 'welcomeText':
-                state.welcomeX = Math.max(0, Math.min(canvasWidth, newX));
-                state.welcomeY = Math.max(0, Math.min(canvasHeight, newY));
-                break;
-            case 'idBox':
-                state.idBoxX = Math.max(0, Math.min(canvasWidth, newX));
-                state.idBoxY = Math.max(0, Math.min(canvasHeight, newY));
-                break;
-        }
-
-        updateCanvas();
-    }
-
-    function endDrag(e) {
-        if (isDragging) {
-            isDragging = false;
-            draggedElement = null;
-            canvas.classList.remove('dragging');
-            updateCanvas(); 
-        }
-    }
-    
-    // 🟢 NOVO: Cores do Botão ajustadas para o tema WhatsApp Dark
-    function toggleMoveMode() {
-        isMoveModeActive = !isMoveModeActive;
-        const button = document.getElementById('toggleMoveModeButton');
-        
-        if (isMoveModeActive) {
-            button.textContent = 'Desativar Modo Mover (Arrasto Habilitado)';
-            // Verde Destaque
-            button.style.backgroundColor = '#00B09C'; 
-            button.style.color = '#101D25';
-            canvas.classList.add('canvas-draggable');
-            canvas.style.cursor = 'grab'; 
-        } else {
-            button.textContent = 'Ativar Modo Mover';
-            // Cinza Secundário/Padrão
-            button.style.backgroundColor = '#374151'; 
-            button.style.color = '#E9EDEF';
-            canvas.classList.remove('canvas-draggable');
-            canvas.style.cursor = 'default'; 
-        }
-    }
-
-    // Event Listeners para Desktop e Mobile
-    canvas.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', endDrag);
-    canvas.addEventListener('touchstart', startDrag, { passive: false });
-    window.addEventListener('touchmove', drag, { passive: false });
-    window.addEventListener('touchend', endDrag);
-    // --- FIM DAS FUNÇÕES DE ARRASTO ---
-
-    // ... (O restante das funções de desenho e lógica permanece o mesmo, incluindo drawCircularImage) ...
-
-    function getElementBounds(ctx, config) {
-        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
-        const ID_TEXT = FIXED_USER_NAME;
-
-        // Passa o raio correto do input para o hit test
-        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
-        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
-
-        const fontSize = document.getElementById('welcomeFontSize').value;
-        ctx.font = getWelcomeFont();
-        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
-        const welcomeWidth = welcomeMetrics.width;
-        const welcomeHeight = parseInt(fontSize) * 1.1; 
-        const welcomeBounds = {
-            x: state.welcomeX - welcomeWidth / 2, 
-            y: state.welcomeY - welcomeHeight,
-            width: welcomeWidth,
-            height: welcomeHeight 
-        };
-
-        ctx.font = DEFAULT_FONT;
-        const idMetrics = ctx.measureText(ID_TEXT);
-        const boxPaddingX = 20;
-        const boxPaddingY = 10;
-        const boxWidth = idMetrics.width + boxPaddingX * 2;
-        const boxHeight = 28 + boxPaddingY * 2;
-        const idBoxBounds = {
-            x: state.idBoxX - boxWidth / 2,
-            y: state.idBoxY - boxHeight / 2,
-            width: boxWidth,
-            height: boxHeight
-        };
-
-        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
-    }
-
-    function hitTest(x, y, bounds) {
-        return x >= bounds.x && x <= bounds.x + bounds.width &&
-               y >= bounds.y && y <= bounds.y + bounds.height;
-    }
-
-    // 🌟 CORREÇÃO FINAL: Fórmula de distância para o hit test circular
-    function hitTestCircle(x, y, circleBounds) {
-        const dx = x - circleBounds.x;
-        const dy = y - circleBounds.y;
-        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
-    }
-    
-    // ... (O restante das funções como drawWelcomeCanvas, updateCanvas, etc., que não foram alteradas) ...
-    // Funções auxiliares (loadImageAsync, drawCircularImage, syncColorInputs, drawWelcomeCanvas, 
-    // getCurrentConfig, updateCanvas, updateSummaryPanel, onPanelChange, loadSelectedPanel, 
-    // saveSelectedPanelToStorage, updateRangeFromState, exportConfigAsJson)
-    // são omitidas aqui por brevidade, mas devem estar COMPLETAS no arquivo final.
-    
-    
-    // Função drawCircularImage: Mantenha a versão anterior que desenha a imagem no Canvas
+    // --- FUNÇÕES DE CARREGAMENTO E DESENHO DE IMAGEM ---
 
     const loadImageAsync = (url) => {
         return new Promise((resolve) => {
@@ -515,6 +338,7 @@
             const imgRatio = imgWidth / imgHeight;
             const targetRatio = 1;
 
+            // Lógica de "Cover" para cortar a imagem para o círculo
             if (imgRatio > targetRatio) {
                 sHeight = imgHeight;
                 sWidth = imgHeight * targetRatio;
@@ -537,6 +361,276 @@
         }
     };
 
+    // --- FUNÇÕES DE ARRASTO E HIT TEST ---
+    
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    function getElementBounds(ctx, config) {
+        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
+        const ID_TEXT = FIXED_USER_NAME;
+
+        // Bounds para Avatares (Raio é importante)
+        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
+        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
+
+        // Bounds para Texto de Boas-Vindas
+        const fontSize = document.getElementById('welcomeFontSize').value;
+        ctx.font = getWelcomeFont();
+        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
+        const welcomeWidth = welcomeMetrics.width;
+        const welcomeHeight = parseInt(fontSize) * 1.1; 
+        const welcomeBounds = {
+            x: state.welcomeX - welcomeWidth / 2, 
+            y: state.welcomeY - welcomeHeight,
+            width: welcomeWidth,
+            height: welcomeHeight 
+        };
+
+        // Bounds para ID Box
+        ctx.font = DEFAULT_FONT;
+        const idMetrics = ctx.measureText(ID_TEXT);
+        const boxPaddingX = 20;
+        const boxPaddingY = 10;
+        const boxWidth = idMetrics.width + boxPaddingX * 2;
+        const boxHeight = 28 + boxPaddingY * 2;
+        const idBoxBounds = {
+            x: state.idBoxX - boxWidth / 2,
+            y: state.idBoxY - boxHeight / 2,
+            width: boxWidth,
+            height: boxHeight
+        };
+
+        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
+    }
+
+    function hitTest(x, y, bounds) {
+        return x >= bounds.x && x <= bounds.x + bounds.width &&
+               y >= bounds.y && y <= bounds.y + bounds.height;
+    }
+
+    function hitTestCircle(x, y, circleBounds) {
+        const dx = x - circleBounds.x;
+        const dy = y - circleBounds.y;
+        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
+    }
+
+    function startDrag(e) {
+        if (!isMoveModeActive) {
+            if (e.touches) { e.preventDefault(); }
+            return; 
+        }
+
+        e.preventDefault(); 
+        
+        const pos = getMousePos(e);
+        const bounds = getElementBounds(ctx, getCurrentConfig()); 
+
+        if (hitTest(pos.x, pos.y, bounds.idbox)) {
+            draggedElement = 'idBox';
+            dragOffsetX = pos.x - state.idBoxX;
+            dragOffsetY = pos.y - state.idBoxY;
+        } else if (hitTest(pos.x, pos.y, bounds.welcome)) {
+            draggedElement = 'welcomeText';
+            dragOffsetX = pos.x - state.welcomeX;
+            dragOffsetY = pos.y - state.welcomeY;
+        } 
+        else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
+            draggedElement = 'userAvatar';
+            dragOffsetX = pos.x - state.userX;
+            dragOffsetY = pos.y - state.userY;
+        } 
+        else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
+            draggedElement = 'groupAvatar';
+            dragOffsetX = pos.x - state.groupX;
+            dragOffsetY = pos.y - state.groupY;
+        } else {
+            draggedElement = null;
+            return;
+        }
+
+        isDragging = true;
+        canvas.classList.add('dragging');
+    }
+
+    // 🟢 FUNÇÃO DRAG MODIFICADA PARA INCLUIR SMART GUIDES
+    function drag(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        const pos = getMousePos(e);
+        let newX = pos.x - dragOffsetX;
+        let newY = pos.y - dragOffsetY;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
+
+        // 1. Aplicar alinhamento ao centro do Canvas
+        if (Math.abs(newX - CANVAS_CENTER_X) < ALIGN_TOLERANCE) {
+            newX = CANVAS_CENTER_X;
+            activeGuides.centerX = true;
+        }
+        if (Math.abs(newY - CANVAS_CENTER_Y) < ALIGN_TOLERANCE) {
+            newY = CANVAS_CENTER_Y;
+            activeGuides.centerY = true;
+        }
+
+        // 2. Aplicar alinhamento a outros elementos
+        const allElements = ['userAvatar', 'groupAvatar', 'welcomeText', 'idBox'];
+        const otherElements = allElements.filter(el => el !== draggedElement);
+        const currentConfig = getCurrentConfig();
+
+        const elementCenters = {
+            userAvatar: { x: currentConfig.userX, y: currentConfig.userY },
+            groupAvatar: { x: currentConfig.groupX, y: currentConfig.groupY },
+            welcomeText: { x: currentConfig.welcomeX, y: currentConfig.welcomeY },
+            idBox: { x: currentConfig.idBoxX, y: currentConfig.idBoxY }
+        };
+
+        for (const otherElement of otherElements) {
+            const targetX = elementCenters[otherElement].x;
+            const targetY = elementCenters[otherElement].y;
+
+            // Alinhamento horizontal (Y)
+            if (Math.abs(newY - targetY) < ALIGN_TOLERANCE) {
+                newY = targetY;
+                activeGuides.alignY = targetY;
+            }
+
+            // Alinhamento vertical (X)
+            if (Math.abs(newX - targetX) < ALIGN_TOLERANCE) {
+                newX = targetX;
+                activeGuides.alignX = targetX;
+            }
+        }
+        
+        // 3. Atualizar o estado do elemento arrastado
+        switch (draggedElement) {
+            case 'userAvatar':
+                state.userX = Math.max(50, Math.min(canvasWidth - 50, newX));
+                state.userY = Math.max(50, Math.min(canvasHeight - 50, newY));
+                updateRangeFromState('userX', state.userX);
+                updateRangeFromState('userY', state.userY);
+                break;
+            case 'groupAvatar':
+                state.groupX = Math.max(20, Math.min(canvasWidth - 20, newX));
+                state.groupY = Math.max(20, Math.min(canvasHeight - 20, newY));
+                updateRangeFromState('groupX', state.groupX);
+                updateRangeFromState('groupY', state.groupY);
+                break;
+            case 'welcomeText':
+                state.welcomeX = Math.max(0, Math.min(canvasWidth, newX));
+                state.welcomeY = Math.max(0, Math.min(canvasHeight, newY));
+                break;
+            case 'idBox':
+                state.idBoxX = Math.max(0, Math.min(canvasWidth, newX));
+                state.idBoxY = Math.max(0, Math.min(canvasHeight, newY));
+                break;
+        }
+
+        updateCanvas();
+    }
+
+    function endDrag(e) {
+        if (isDragging) {
+            isDragging = false;
+            draggedElement = null;
+            canvas.classList.remove('dragging');
+            // Remove as guias ativas ao parar de arrastar
+            activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null }; 
+            updateCanvas(); 
+        }
+    }
+    
+    // Event Listeners para Desktop e Mobile
+    canvas.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', endDrag);
+    
+    // --- FUNÇÕES DE GUIAS E MODO MOVER ---
+    
+    function drawSmartGuides() {
+        if (!isDragging || !isMoveModeActive) return;
+
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); // Linha tracejada
+
+        // Guia Central Vertical do Canvas
+        if (activeGuides.centerX) {
+            ctx.strokeStyle = '#FFD900'; // Amarelo
+            ctx.beginPath();
+            ctx.moveTo(CANVAS_CENTER_X, 0);
+            ctx.lineTo(CANVAS_CENTER_X, canvas.height);
+            ctx.stroke();
+        }
+
+        // Guia Central Horizontal do Canvas
+        if (activeGuides.centerY) {
+            ctx.strokeStyle = '#FFD900'; // Amarelo
+            ctx.beginPath();
+            ctx.moveTo(0, CANVAS_CENTER_Y);
+            ctx.lineTo(canvas.width, CANVAS_CENTER_Y);
+            ctx.stroke();
+        }
+
+        // Guia de Alinhamento Vertical (X) entre elementos
+        if (activeGuides.alignX !== null) {
+            ctx.strokeStyle = '#00B09C'; // Verde
+            ctx.beginPath();
+            ctx.moveTo(activeGuides.alignX, 0);
+            ctx.lineTo(activeGuides.alignX, canvas.height);
+            ctx.stroke();
+        }
+
+        // Guia de Alinhamento Horizontal (Y) entre elementos
+        if (activeGuides.alignY !== null) {
+            ctx.strokeStyle = '#00B09C'; // Verde
+            ctx.beginPath();
+            ctx.moveTo(0, activeGuides.alignY);
+            ctx.lineTo(canvas.width, activeGuides.alignY);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+    
+    function toggleMoveMode() {
+        isMoveModeActive = !isMoveModeActive;
+        const button = document.getElementById('toggleMoveModeButton');
+        
+        if (isMoveModeActive) {
+            button.textContent = 'Desativar Modo Mover (Arrasto Habilitado)';
+            button.style.backgroundColor = '#00B09C'; 
+            button.style.color = '#101D25';
+            canvas.classList.add('canvas-draggable');
+            canvas.style.cursor = 'grab'; 
+        } else {
+            button.textContent = 'Ativar Modo Mover';
+            button.style.backgroundColor = '#374151'; 
+            button.style.color = '#E9EDEF';
+            canvas.classList.remove('canvas-draggable');
+            canvas.style.cursor = 'default'; 
+            activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
+            updateCanvas();
+        }
+    }
+    
+    // --- FUNÇÃO PRINCIPAL DE DESENHO ---
+    
     async function drawWelcomeCanvas(config) {
         const userPicUrl = document.getElementById('userPicUrlInput').value;
         const groupPicUrl = document.getElementById('groupPicUrlInput').value;
@@ -544,7 +638,7 @@
         const { bgUrl, bgColor, userRadius, groupRadius } = config;
 
         const userX = state.userX, userY = state.userY, groupX = state.groupX, groupY = state.groupY,
-              welcomeX = state.welcomeX, welcomeY = state.welcomeY, idBoxX = state.idBoxX, idBoxY = state.idBoxY;
+             welcomeX = state.welcomeX, welcomeY = state.welcomeY, idBoxX = state.idBoxX, idBoxY = state.idBoxY;
 
         const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
         const WELCOME_COLOR = document.getElementById('welcomeColorInput').value;
@@ -558,6 +652,7 @@
 
         try { await document.fonts.load(`900 100px TTRuns`); } catch (err) { /* Falha silenciosa */ }
 
+        // Carregamento de Imagens
         const [bgImage, userPicData, groupPicData] = await Promise.all([
             loadImageAsync(bgUrl), loadImageAsync(userPicUrl), loadImageAsync(groupPicUrl)
         ]);
@@ -592,7 +687,7 @@
         drawCircularImage(ctx, userX, userY, userRadius, userPicData, USER_FALLBACK_COLOR);
         drawCircularImage(ctx, groupX, groupY, groupRadius, groupPicData, GROUP_FALLBACK_COLOR);
 
-        // 3. Nome do Grupo (Fixo, não arrastável)
+        // 3. Nome do Grupo (Fixo)
         const X_GROUP_NAME = groupX + groupRadius + 15;
         const Y_GROUP_NAME = groupY + 10;
         ctx.font = 'bold 30px Inter, sans-serif';
@@ -616,7 +711,6 @@
         const boxX = idBoxX - boxWidth / 2, boxY = idBoxY - boxHeight / 2;
         const borderRadius = 8;
 
-        // Desenha o box arredondado
         ctx.fillStyle = ID_BOX_COLOR;
         ctx.beginPath();
         ctx.moveTo(boxX + borderRadius, boxY);
@@ -630,14 +724,18 @@
         ctx.arcTo(boxX, boxY, boxX + borderRadius, boxY, borderRadius);
         ctx.fill();
 
-        // Escreve o texto dentro do box
         const textBaselineY = idBoxY + (28 / 2) - 2;
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'center';
         ctx.font = DEFAULT_FONT;
         ctx.fillText(ID_TEXT, idBoxX, textBaselineY);
+
+        // 🚨 Desenha as guias inteligentes POR CIMA de todos os elementos
+        drawSmartGuides();
     }
     
+    // --- FUNÇÕES DE CONFIGURAÇÃO E SINCRONIZAÇÃO ---
+
     function getCurrentConfig() {
         return {
             bgUrl: document.getElementById('bgUrlInput').value,
@@ -672,149 +770,118 @@
         }
     }
 
-
-    function updateCanvas() {
-        if (!isDragging) {
-            state.userX = parseInt(document.getElementById('userX').value);
-            state.userY = parseInt(document.getElementById('userY').value);
-            state.groupX = parseInt(document.getElementById('groupX').value);
-            state.groupY = parseInt(document.getElementById('groupY').value);
+    function updateRangeFromState(id, value) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = Math.round(value);
         }
-
-        syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
-        syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
-        syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
-        syncColorInputs(document.getElementById('idBoxColorInput'), 'idBoxColorHex');
-
-        document.getElementById('userRadiusValue').textContent = document.getElementById('userRadius').value;
-        document.getElementById('userXValue').textContent = Math.round(state.userX);
-        document.getElementById('userYValue').textContent = Math.round(state.userY);
-        document.getElementById('groupRadiusValue').textContent = document.getElementById('groupRadius').value;
-        document.getElementById('groupXValue').textContent = Math.round(state.groupX);
-        document.getElementById('groupYValue').textContent = Math.round(state.groupY);
-        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
-        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
-        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
-        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-        document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
-        
-        const activePanelId = document.getElementById('panelSelect').value;
-        if (activePanelId === 'panel-summary') {
-            updateSummaryPanel();
-        }
-
-        drawWelcomeCanvas(getCurrentConfig());
     }
+
+    // --- FUNÇÕES DE PAINEL E RESUMO ---
 
     function updateSummaryPanel() {
         const config = getCurrentConfig();
-        const summaryDiv = document.getElementById('summary-content');
-        
-        let html = '';
-
-        const summaryData = [
-            { label: 'Cor de Fundo', value: config.bgColor, isColor: true },
-            { label: 'URL de Fundo', value: config.bgUrl, isURL: true },
-            { label: '--- Fotos ---', value: '' },
-            { label: 'Foto do Usuário (URL)', value: document.getElementById('userPicUrlInput').value, isURL: true },
-            { label: 'Foto do Usuário (Raio)', value: `${config.userRadius}px` },
-            { label: 'Foto do Usuário (Posição)', value: `(${config.userX}, ${config.userY})` },
-            { label: 'Foto do Grupo (URL)', value: document.getElementById('groupPicUrlInput').value, isURL: true },
-            { label: 'Foto do Grupo (Raio)', value: `${config.groupRadius}px` },
-            { label: 'Foto do Grupo (Posição)', value: `(${config.groupX}, ${config.groupY})` },
-            { label: '--- Texto ---', value: '' },
-            { label: 'Texto de Boas-Vindas', value: config.welcomeText },
-            { label: 'Cor do Texto B-V', value: config.welcomeColor, isColor: true },
-            { label: 'Tam. do Texto B-V', value: `${config.welcomeFontSize}px` },
-            { label: 'Pos. do Texto B-V', value: `(${config.welcomeX}, ${config.welcomeY})` },
-            { label: 'Cor do Nome do Grupo', value: config.groupNameColor, isColor: true },
-            { label: 'Cor do Box de ID', value: config.idBoxColor, isColor: true },
-            { label: 'Posição do Box de ID', value: `(${config.idBoxX}, ${config.idBoxY})` }
-        ];
-
-        summaryData.forEach(item => {
-            if (item.label.startsWith('---')) {
-                html += `<div class="text-center font-bold text-lg mt-3 mb-1 text-yellow-300">${item.label.replace(/^-+\s*/, '').replace(/\s*-+$/, '')}</div>`;
-            } else {
-                let valueDisplay;
-                if (item.isColor) {
-                    valueDisplay = `<span style="background-color:${item.value}; border: 1px solid #4B5563;" class="inline-block w-4 h-4 rounded-full mr-2"></span>${item.value}`;
-                } else if (item.isURL) {
-                    valueDisplay = item.value.length > 50 ? item.value.substring(0, 47) + '...' : item.value;
-                } else {
-                    valueDisplay = item.value;
-                }
-                
-                html += `
-                    <div class="summary-item">
-                        <span class="text-gray-400">${item.label}:</span>
-                        <span class="text-white font-medium break-all text-right">${valueDisplay}</span>
-                    </div>
-                `;
-            }
-        });
-
-        summaryDiv.innerHTML = html;
+        const contentDiv = document.getElementById('summary-content');
+        contentDiv.innerHTML = `
+            <div class="summary-item"><span>Fundo:</span> <strong>${config.bgUrl === 'false' ? config.bgColor : 'URL Personalizada'}</strong></div>
+            <div class="summary-item"><span>Texto Boas-Vindas:</span> <strong>${config.welcomeText}</strong></div>
+            <div class="summary-item"><span>Cor do Texto:</span> <span style="color: ${config.welcomeColor}">${config.welcomeColor}</span></div>
+            <div class="summary-item"><span>Cor Nome Grupo:</span> <span style="color: ${config.groupNameColor}">${config.groupNameColor}</span></div>
+            <div class="summary-item"><span>Tamanho Fonte:</span> <strong>${config.welcomeFontSize}px</strong></div>
+            <div class="summary-item"><span>Cor Box ID:</span> <strong>${config.idBoxColor}</strong></div>
+            <div class="summary-item"><span>--- Posições Centrais ---</span> <span></span></div>
+            <div class="summary-item"><span>Foto Usuário (X, Y):</span> <strong>(${config.userX}, ${config.userY})</strong></div>
+            <div class="summary-item"><span>Foto Grupo (X, Y):</span> <strong>(${config.groupX}, ${config.groupY})</strong></div>
+            <div class="summary-item"><span>Texto Welcome (X, Y):</span> <strong>(${config.welcomeX}, ${config.welcomeY})</strong></div>
+            <div class="summary-item"><span>Box ID (X, Y):</span> <strong>(${config.idBoxX}, ${config.idBoxY})</strong></div>
+            <div class="summary-item"><span>Raio Usuário/Grupo:</span> <strong>${config.userRadius}px / ${config.groupRadius}px</strong></div>
+        `;
     }
 
     function onPanelChange() {
-        const selectedId = document.getElementById('panelSelect').value;
+        const selectedPanelId = document.getElementById('panelSelect').value;
         document.querySelectorAll('.panel').forEach(panel => {
             panel.classList.remove('active');
         });
-        document.getElementById(selectedId).classList.add('active');
-        
-        if (selectedId === 'panel-summary') {
+        document.getElementById(selectedPanelId).classList.add('active');
+        if (selectedPanelId === 'panel-summary') {
             updateSummaryPanel();
         }
-
-        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedId);
     }
-    
+
     function loadSelectedPanel() {
-        const lastPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY);
-        if (lastPanelId && document.getElementById(lastPanelId)) {
-            document.getElementById('panelSelect').value = lastPanelId;
-            onPanelChange();
-        } else {
-            document.getElementById('panel-background').classList.add('active');
-            document.getElementById('panelSelect').value = 'panel-background';
-        }
+        const savedPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY) || 'panel-background';
+        document.getElementById('panelSelect').value = savedPanelId;
+        onPanelChange();
     }
 
     function saveSelectedPanelToStorage() {
-        const currentPanelId = document.getElementById('panelSelect').value;
-        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, currentPanelId);
-        alert(`Aba '${document.querySelector(`#panelSelect option[value='${currentPanelId}']`).textContent.trim()}' salva como preferência inicial!`);
+        const selectedPanelId = document.getElementById('panelSelect').value;
+        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedPanelId);
+        alert(`Aba "${document.querySelector(`#panelSelect option[value='${selectedPanelId}']`).textContent.trim()}" salva!`);
     }
-
-    function updateRangeFromState(elementId, value) {
-        const range = document.getElementById(elementId);
-        if (range) range.value = Math.round(value);
-    }
-
+    
     function exportConfigAsJson() {
         const config = getCurrentConfig();
-        const jsonString = JSON.stringify(config, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
+        const jsonConfig = JSON.stringify(config, null, 2);
+        const blob = new Blob([jsonConfig], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'welcome_card_config.json';
+        a.download = 'welcome_config.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
 
+
+    // --- FUNÇÃO DE ATUALIZAÇÃO E INICIALIZAÇÃO ---
+
+    function updateCanvas() {
+        if (!isDragging) {
+            // Sincroniza ranges com o state (se não estiver arrastando)
+            state.userX = parseInt(document.getElementById('userX').value);
+            state.userY = parseInt(document.getElementById('userY').value);
+            state.groupX = parseInt(document.getElementById('groupX').value);
+            state.groupY = parseInt(document.getElementById('groupY').value);
+        }
+
+        // Sincronizar todos os campos de texto X/Y
+        document.getElementById('userXValue').textContent = Math.round(state.userX);
+        document.getElementById('userYValue').textContent = Math.round(state.userY);
+        document.getElementById('groupXValue').textContent = Math.round(state.groupX);
+        document.getElementById('groupYValue').textContent = Math.round(state.groupY);
+        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
+        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
+        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
+        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
+        
+        // Sincronizar cores e ranges
+        syncColorInputs(document.getElementById('bgColorInput'), 'bgColorHex');
+        syncColorInputs(document.getElementById('welcomeColorInput'), 'welcomeColorHex');
+        syncColorInputs(document.getElementById('groupNameColorInput'), 'groupNameColorHex');
+        syncColorInputs(document.getElementById('idBoxColorInput'), 'idBoxColorHex');
+
+        document.getElementById('userRadiusValue').textContent = document.getElementById('userRadius').value;
+        document.getElementById('groupRadiusValue').textContent = document.getElementById('groupRadius').value;
+        document.getElementById('welcomeFontSizeValue').textContent = document.getElementById('welcomeFontSize').value;
+        
+        drawWelcomeCanvas(getCurrentConfig());
+        updateSummaryPanel();
+    }
+
+
+    // Inicialização ao carregar a página
     window.onload = () => {
         initializeState();
-        loadSelectedPanel();
+        loadSelectedPanel(); 
         updateCanvas();
-        
-        isMoveModeActive = true; 
-        toggleMoveMode(); 
+        // Ajuste inicial do botão de mover
+        document.getElementById('toggleMoveModeButton').style.backgroundColor = '#374151';
+        document.getElementById('toggleMoveModeButton').style.color = '#E9EDEF';
     };
+    
 </script>
 </body>
 </html>
