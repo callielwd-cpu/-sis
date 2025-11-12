@@ -84,7 +84,7 @@
 </head>
 <body class="p-4">
 
-    <h1 class="text-3xl font-bold mb-6 text-center text-white">🎨 Editor de Card de <span style="color:#7289da;">Boas-Vindas</span> em grupos</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-white">🎨 Editor de Card<span style="color:#7289da;">Welcome</h1>
     
     <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
         
@@ -105,10 +105,11 @@
                     <option value="panel-background">Background 🖼️</option>
                     <option value="panel-positions">Posicionamento (X, Y) ⚙️</option>
                     <option value="panel-text">Texto e Cores 🎨</option>
-                    <option value="panel-summary">Resumo dos Ajustes 👁️‍🗨️</option>
+                    <option value="panel-summary">Visualizar e salvar</option>
+                     <option value="panel-help">Ísis Manual ✨</option>
                 </select>
             </div>
-            
+
             <div id="panel-background" class="panel active">
                 <h3 class="text-lg font-bold mb-3">🖼️ Background</h3>
                 <div class="mb-3">
@@ -234,6 +235,70 @@
                 </div>
             </div>
 
+            <div id="panel-help" class="panel bg-gray-900 shadow-2xl rounded-xl p-6 max-w-sm mx-auto transform hover:scale-[1.01] transition duration-300 ease-in-out border border-indigo-700/50">
+
+            <div class="flex items-center justify-start mb-4 border-b border-indigo-800 pb-3">
+            <span class="text-3xl mr-3" role="img" aria-label="Ajuda">✨</span>
+            <h3 class="text-2xl font-extrabold text-white tracking-wider">Help-me</h3>
+        </div>
+
+        <div class="w-full mb-5">
+         <img src="https://i.ibb.co/35PzX1t1/sis.png" alt="Assistente Lexi" class="rounded-xl shadow-lg max-w-full transition duration-300">
+        </div>
+
+    <p class="text-sm mb-4 font-semibold italic" style="color: #a78bfa;">
+        🛠️ Bem-vindo(a) ao seu centro de configurações! Veja o que você pode otimizar:
+    </p>
+
+    <ul class="space-y-3 mb-6">
+        <li class="flex items-start text-sm text-gray-200">
+            <span class="text-indigo-400 mr-3 mt-1">●</span>
+            <div>
+                <strong class="text-[#37ff77]">🖼️ Background:</strong>
+                Ajuste do perfil de usuario, perfil do grupo e imagem de fundo. caso não quiera usar imagem de fundo, deixe 'false' no campo correspondente. se Optar por usar cor sólida, insira o código HEX em "Cor Sólida de Fundo (HEX):".
+            </div>
+        </li>
+        <li class="flex items-start text-sm text-gray-200">
+            <span class="text-indigo-400 mr-3 mt-1">●</span>
+            <div>
+                <strong class="text-[#37ff77]">Posicionamento X e Y:</strong>
+                Você poderá Visualizar todas as posições e parâmetros do seu card em tempo real.
+            </div>
+        </li>
+        <li class="flex items-start text-sm text-gray-200">
+            <span class="text-indigo-400 mr-3 mt-1">●</span>
+            <div>
+                <strong class="text-[#37ff77]">🔠 Texto e Cores</strong>
+                Aqui Você pode personalizar o texto de boas-vindas, ajustar o tamanho da fonte e escolher cores que combinem com o estilo do seu grupo, como cor do nome do grupo e também a cor do Box.
+            </div>
+        </li>
+        <li class="flex items-start text-sm text-gray-200">
+            <span class="text-indigo-400 mr-3 mt-1">●</span>
+            <div>
+                <strong class="text-[#7da565]">Visualização e Salvar:</strong>
+                Você poderá conferir todos os parâmetros e conferir se está tudo em ordem. Após isso, você poderá copiar o modelo e ir até o grupo onde vc quiera ultilizar o modelo e enviar juntamente com o comando.
+            </div>
+        </li>
+    </ul>
+
+    <div class="mt-6 bg-indigo-900/40 p-5 rounded-xl border border-indigo-700">
+        <div class="flex items-center mb-2">
+            <span class="text-lg text-indigo-400 font-extrabold mr-2">💡</span>
+            <span class="font-bold text-white text-base">Pronto para usar o modelo?</span>
+        </div>
+        <p class="text-sm text-indigo-200 mt-1">
+            Lembre-se: Ao finalizar a personalização, Vc deve entrar no grupo e usar o comando <strong class="text-white">"!cardwelcome"</strong> e envie juntamente com o código copiado No menu <strong class="text-white">"Visualizar e salvar"</strong>. 
+        </p>
+
+        <a href="https://seusite.com/salvar" 
+   class="w-full block text-center mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/50 transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+    Mais detalhes
+</a>
+
+        </div>
+     </div>
+
+
             <div id="panel-summary" class="panel">
                 <h3 class="text-lg font-bold mb-3">📊 Resumo dos Ajustes</h3>
                 <div id="summary-content" class="mb-4 bg-gray-800 p-3 rounded-md">
@@ -246,6 +311,9 @@
                 <button onclick="exportConfigAsJson()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
                     ⬇️ Exportar Config (.json)
                 </button>
+                <button onclick="copyConfigAsBase64()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
+        🔑 Copiar meu modelo
+ </button>
             </div>
             
         </div>
@@ -806,10 +874,36 @@
         document.getElementById('summary-content').innerHTML = summary;
     }
 
+    // 🌟 NOVA FUNÇÃO: Copia a configuração como Base64
+    function copyConfigAsBase64() {
+        const config = getCurrentConfig();
+        
+        // 1. Converte o objeto config em uma string JSON minificada
+        const jsonString = JSON.stringify(config); 
+        
+        // 2. Codifica a string JSON para Base64 (btoa)
+        try {
+            const base64String = btoa(jsonString);
+            
+            // 3. Copia a string Base64 para a área de transferência
+            navigator.clipboard.writeText(base64String).then(() => {
+                alert('Configuração codificada em Base64 copiada para a área de transferência!');
+            }).catch(err => {
+                console.error('Falha ao copiar Base64:', err);
+                alert('Falha ao copiar o Base64. Veja o console para detalhes.');
+            });
+            
+        } catch (e) {
+            console.error('Erro de Codificação Base64:', e);
+            alert('Erro ao codificar a configuração em Base64.');
+        }
+    }
+    
+    // Função original de cópia JSON (mantida por compatibilidade e utilidade)
     function copyConfigAsJson() {
         const config = getCurrentConfig();
         
-        // 🚀 MUDANÇA APLICADA AQUI: O terceiro argumento é '0' (ou omitido) para nenhuma identação/linha nova.
+        // JSON minificado (linha única)
         const jsonConfig = JSON.stringify(config); 
         
         navigator.clipboard.writeText(jsonConfig).then(() => {
@@ -823,8 +917,8 @@
     function exportConfigAsJson() {
         const config = getCurrentConfig();
         
-        // 🚀 MUDANÇA APLICADA AQUI: O terceiro argumento é '0' (ou omitido).
-        const jsonConfig = JSON.stringify(config); 
+        // O terceiro argumento é '2' para formatação legível (para o arquivo)
+        const jsonConfig = JSON.stringify(config, null, 2); 
         
         const blob = new Blob([jsonConfig], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
