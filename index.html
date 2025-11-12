@@ -83,22 +83,25 @@
     </style>
 </head>
 <body class="p-4">
+    <h1 class="text-3xl font-bold mb-6 text-center text-white">
+        🎨 Editor de Card <span style="color:#7289da;">Welcome</span>
+    </h1>
 
-    <h1 class="text-3xl font-bold mb-6 text-center text-white">🎨 Editor de Card<span style="color:#7289da;">Welcome</h1>
-    
     <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
-        
+
         <div class="lg:w-2/3 bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col items-center">
             <h2 class="text-xl font-semibold mb-3">Pré-visualização do Card (900x350)</h2>
             <canvas id="welcomeCanvas" width="900" height="350" class="w-full lg:w-[900px] h-auto max-h-[350px]"></canvas>
-            
-            <button id="toggleMoveModeButton" onclick="toggleMoveMode()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 mt-4 w-full lg:w-96">
+
+            <button id="toggleMoveModeButton"
+                onclick="toggleMoveMode()"
+                class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 mt-4 w-full lg:w-96">
                 Ativar Modo Mover
             </button>
         </div>
 
         <div class="lg:w-1/3 bg-gray-900 p-6 rounded-xl shadow-lg">
-            
+
             <div class="mb-4">
                 <label for="panelSelect" class="block text-sm font-medium mb-1">Selecione o Painel de Ajustes:</label>
                 <select id="panelSelect" onchange="onPanelChange()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
@@ -112,10 +115,12 @@
 
             <div id="panel-background" class="panel active">
                 <h3 class="text-lg font-bold mb-3">🖼️ Background</h3>
+
                 <div class="mb-3">
                     <label for="bgUrlInput" class="block text-sm font-medium mb-1">URL da Imagem de Fundo (ou 'false'):</label>
                     <input type="text" id="bgUrlInput" value="false" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
                 </div>
+
                 <div class="mb-3">
                     <label for="bgColorInput" class="block text-sm font-medium mb-1">Cor Sólida de Fundo (HEX):</label>
                     <div class="flex items-center gap-2">
@@ -123,22 +128,27 @@
                         <input type="text" id="bgColorHex" value="#0b1323" oninput="document.getElementById('bgColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
                     </div>
                 </div>
+
                 <hr class="border-gray-700 my-4">
-                
+
                 <h4 class="font-semibold mb-2">Avatares</h4>
+
                 <div class="mb-3">
                     <label for="userPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil usuario:</label>
                     <input type="text" id="userPicUrlInput" value="https://i.ibb.co/N6nNsRYf/lua.gif" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
                 </div>
+
                 <div class="range-container">
                     <label for="userRadius">Raio Usuário:</label>
                     <input type="range" id="userRadius" min="10" max="100" value="66" step="1" oninput="updateCanvas()">
                     <span id="userRadiusValue">66</span>
                 </div>
+
                 <div class="mb-3 mt-4">
                     <label for="groupPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil grupo:</label>
                     <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/PsV0zCTw/si.jpg" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
                 </div>
+
                 <div class="range-container">
                     <label for="groupRadius">Raio Grupo:</label>
                     <input type="range" id="groupRadius" min="10" max="100" value="35" step="1" oninput="updateCanvas()">
@@ -148,7 +158,7 @@
 
             <div id="panel-positions" class="panel">
                 <h3 class="text-lg font-bold mb-3">📍 Posições Centrais (0-900 / 0-350)</h3>
-                
+
                 <h4 class="font-semibold mb-2 mt-4">Avatar do Usuário</h4>
                 <div class="range-container">
                     <label for="userX">Posição X:</label>
@@ -172,7 +182,7 @@
                     <input type="range" id="groupY" min="0" max="350" value="300" step="1" oninput="updateCanvas()">
                     <span id="groupYValue">300</span>
                 </div>
-                
+
                 <h4 class="font-semibold mb-2 mt-4">Texto de Boas-Vindas (Arrastável)</h4>
                 <div class="range-container">
                     <label>Posição X:</label>
@@ -196,16 +206,18 @@
 
             <div id="panel-text" class="panel">
                 <h3 class="text-lg font-bold mb-3">🔠 Texto e Cores</h3>
-                
+
                 <div class="mb-3">
                     <label for="welcomeTextInput" class="block text-sm font-medium mb-1">Texto de Boas-Vindas:</label>
                     <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
                 </div>
+
                 <div class="range-container mb-3">
                     <label for="welcomeFontSize">Tamanho da Fonte:</label>
                     <input type="range" id="welcomeFontSize" min="20" max="100" value="50" step="1" oninput="updateCanvas()">
                     <span id="welcomeFontSizeValue">50</span>
                 </div>
+
                 <div class="mb-3">
                     <label for="welcomeColorInput" class="block text-sm font-medium mb-1">Cor do Texto (Welcome):</label>
                     <div class="flex items-center gap-2">
@@ -213,9 +225,9 @@
                         <input type="text" id="welcomeColorHex" value="#ffffff" oninput="document.getElementById('welcomeColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
                     </div>
                 </div>
-                
+
                 <hr class="border-gray-700 my-4">
-                
+
                 <div class="mb-3">
                     <label for="groupNameColorInput" class="block text-sm font-medium mb-1">Cor do Nome do Grupo:</label>
                     <div class="flex items-center gap-2">
@@ -225,7 +237,7 @@
                 </div>
 
                 <hr class="border-gray-700 my-4">
-                
+
                 <div class="mb-3">
                     <label for="idBoxColorInput" class="block text-sm font-medium mb-1">Cor do Box ID:</label>
                     <div class="flex items-center gap-2">
@@ -236,88 +248,126 @@
             </div>
 
             <div id="panel-help" class="panel bg-gray-900 shadow-2xl rounded-xl p-6 max-w-sm mx-auto transform hover:scale-[1.01] transition duration-300 ease-in-out border border-indigo-700/50">
+                <div class="flex items-center justify-start mb-4 border-b border-indigo-800 pb-3">
+                    <span class="text-3xl mr-3" role="img" aria-label="Ajuda">✨</span>
+                    <h3 class="text-2xl font-extrabold text-white tracking-wider">Help-me</h3>
+                </div>
 
-            <div class="flex items-center justify-start mb-4 border-b border-indigo-800 pb-3">
-            <span class="text-3xl mr-3" role="img" aria-label="Ajuda">✨</span>
-            <h3 class="text-2xl font-extrabold text-white tracking-wider">Help-me</h3>
-        </div>
+                <div class="w-full mb-5 relative overflow-hidden rounded-xl shadow-lg">
+                    <img id="carousel-img" src="https://i.ibb.co/pBN6NM9h/Isis2.png" alt="Assistente Lexi" class="rounded-xl max-w-full transition duration-500 transform">
+                </div>
 
-        <div class="w-full mb-5">
-         <img src="https://i.ibb.co/35PzX1t1/sis.png" alt="Assistente Lexi" class="rounded-xl shadow-lg max-w-full transition duration-300">
-        </div>
+                <div class="text-center text-white text-sm font-medium mt-2">
+                    <span id="carousel-text" class="transition-opacity duration-700 opacity-100">
+                        Oi! Eu sou <span style="color: #6666FF;">ísis</span> 💕
+                    </span>
+                </div>
 
-    <p class="text-sm mb-4 font-semibold italic" style="color: #a78bfa;">
-        🛠️ Bem-vindo(a) ao seu centro de configurações! Veja o que você pode otimizar:
-    </p>
+                <script>
+                    const imagens = [
+                        "https://i.ibb.co/Gf4fBpqc/Isis.png",
+                        "https://i.ibb.co/JjzFfXx9/Isis1.png",
+                        "https://i.ibb.co/0jp956XM/isi34.png",
+                        "https://i.ibb.co/fYdy2VJt/cardissi.png",
+                        "https://i.ibb.co/Gf4fBpqc/Isis.png"
+                    ];
 
-    <ul class="space-y-3 mb-6">
-        <li class="flex items-start text-sm text-gray-200">
-            <span class="text-indigo-400 mr-3 mt-1">●</span>
-            <div>
-                <strong class="text-[#37ff77]">🖼️ Background:</strong>
-                Ajuste do perfil de usuario, perfil do grupo e imagem de fundo. caso não quiera usar imagem de fundo, deixe 'false' no campo correspondente. se Optar por usar cor sólida, insira o código HEX em "Cor Sólida de Fundo (HEX):".
+                    const textos = [
+                        'Melhor Bot <span style="color:#25D366;">whatsapp</span> com welcome.',
+                        'É hora de <span style="color:#B7FF00;">brilhar</span> no seu grupo! 🌟',
+                        'Personalização✨',
+                        'Dê <span style="color:#EEFF00;">boas-vindas</span> com estilo! 🎉',
+                        'Vamos criar algo <span style="color:#FF8C00;">incrível?</span> 💖'
+                    ];
+
+                    let index = 0;
+                    const img = document.getElementById("carousel-img");
+                    const txt = document.getElementById("carousel-text");
+
+                    setInterval(() => {
+                        index = (index + 1) % imagens.length;
+                        img.classList.add("opacity-0");
+                        txt.classList.add("opacity-0");
+
+                        setTimeout(() => {
+                            img.src = imagens[index];
+                            txt.innerHTML = textos[index]; // ✅ agora o <span> é renderizado com cor
+                            img.classList.remove("opacity-0");
+                            txt.classList.remove("opacity-0");
+                        }, 700);
+                    }, 3500);
+                </script>
+
+
+                <p class="text-sm mb-4 font-semibold italic" style="color:#a78bfa;">
+                    🛠️ Bem-vindo(a) ao seu centro de configurações! Veja o que você pode otimizar:
+                </p>
+
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-start text-sm text-gray-200">
+                        <span class="text-indigo-400 mr-3 mt-1">●</span>
+                        <div>
+                            <strong class="text-[#37ff77]">🖼️ Background:</strong>
+                            Ajuste do perfil de usuário, perfil do grupo e imagem de fundo. Caso não queira usar imagem, deixe 'false'. Para cor sólida, use o código HEX.
+                        </div>
+                    </li>
+                    <li class="flex items-start text-sm text-gray-200">
+                        <span class="text-indigo-400 mr-3 mt-1">●</span>
+                        <div>
+                            <strong class="text-[#37ff77]">Posicionamento X e Y:</strong>
+                            Visualize as posições e parâmetros do seu card em tempo real.
+                        </div>
+                    </li>
+                    <li class="flex items-start text-sm text-gray-200">
+                        <span class="text-indigo-400 mr-3 mt-1">●</span>
+                        <div>
+                            <strong class="text-[#37ff77]">🔠 Texto e Cores:</strong>
+                            Personalize o texto, tamanho da fonte e cores do grupo e Box.
+                        </div>
+                    </li>
+                    <li class="flex items-start text-sm text-gray-200">
+                        <span class="text-indigo-400 mr-3 mt-1">●</span>
+                        <div>
+                            <strong class="text-[#7da565]">Visualização e Salvar:</strong>
+                            Veja tudo antes de copiar o modelo e enviar com o comando.
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="mt-6 bg-indigo-900/40 p-5 rounded-xl border border-indigo-700">
+                    <div class="flex items-center mb-2">
+                        <span class="text-lg text-indigo-400 font-extrabold mr-2">💡</span>
+                        <span class="font-bold text-white text-base">Pronto para usar o modelo?</span>
+                    </div>
+                    <p class="text-sm text-indigo-200 mt-1">
+                        Lembre-se: finalize e use o comando <strong class="text-white">"!cardwelcome"</strong> com o código copiado no menu <strong class="text-white">"Visualizar e salvar"</strong>.
+                    </p>
+
+                    <a href="https://seusite.com/salvar" class="w-full block text-center mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/50 transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+                        Mais detalhes
+                    </a>
+                </div>
             </div>
-        </li>
-        <li class="flex items-start text-sm text-gray-200">
-            <span class="text-indigo-400 mr-3 mt-1">●</span>
-            <div>
-                <strong class="text-[#37ff77]">Posicionamento X e Y:</strong>
-                Você poderá Visualizar todas as posições e parâmetros do seu card em tempo real.
-            </div>
-        </li>
-        <li class="flex items-start text-sm text-gray-200">
-            <span class="text-indigo-400 mr-3 mt-1">●</span>
-            <div>
-                <strong class="text-[#37ff77]">🔠 Texto e Cores</strong>
-                Aqui Você pode personalizar o texto de boas-vindas, ajustar o tamanho da fonte e escolher cores que combinem com o estilo do seu grupo, como cor do nome do grupo e também a cor do Box.
-            </div>
-        </li>
-        <li class="flex items-start text-sm text-gray-200">
-            <span class="text-indigo-400 mr-3 mt-1">●</span>
-            <div>
-                <strong class="text-[#7da565]">Visualização e Salvar:</strong>
-                Você poderá conferir todos os parâmetros e conferir se está tudo em ordem. Após isso, você poderá copiar o modelo e ir até o grupo onde vc quiera ultilizar o modelo e enviar juntamente com o comando.
-            </div>
-        </li>
-    </ul>
-
-    <div class="mt-6 bg-indigo-900/40 p-5 rounded-xl border border-indigo-700">
-        <div class="flex items-center mb-2">
-            <span class="text-lg text-indigo-400 font-extrabold mr-2">💡</span>
-            <span class="font-bold text-white text-base">Pronto para usar o modelo?</span>
-        </div>
-        <p class="text-sm text-indigo-200 mt-1">
-            Lembre-se: Ao finalizar a personalização, Vc deve entrar no grupo e usar o comando <strong class="text-white">"!cardwelcome"</strong> e envie juntamente com o código copiado No menu <strong class="text-white">"Visualizar e salvar"</strong>. 
-        </p>
-
-        <a href="https://seusite.com/salvar" 
-   class="w-full block text-center mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/50 transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
-    Mais detalhes
-</a>
-
-        </div>
-     </div>
-
 
             <div id="panel-summary" class="panel">
                 <h3 class="text-lg font-bold mb-3">📊 Resumo dos Ajustes</h3>
-                <div id="summary-content" class="mb-4 bg-gray-800 p-3 rounded-md">
-                    Carregando resumo...
-                </div>
-                
+                <div id="summary-content" class="mb-4 bg-gray-800 p-3 rounded-md">Carregando resumo...</div>
+
                 <button onclick="copyConfigAsJson()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
                     📋 Copiar JSON para a Área de Transferência
                 </button>
+
                 <button onclick="exportConfigAsJson()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
                     ⬇️ Exportar Config (.json)
                 </button>
+
                 <button onclick="copyConfigAsBase64()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
-        🔑 Copiar meu modelo
- </button>
+                    🔑 Copiar meu modelo
+                </button>
             </div>
-            
         </div>
     </div>
+</body>
 
 <script>
     const FIXED_USER_NAME = 'Sarah_Jones#7489';
