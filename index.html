@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Isis Studio | Editor de Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -31,6 +31,7 @@
             color: #e2e8f0;
             min-height: 100vh;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
 
         .glass-panel {
@@ -40,16 +41,14 @@
             border-radius: 24px;
         }
 
-        /* --- EFEITO DE LUZ ANIMADA NO CARD --- */
         .preview-container {
             position: relative;
-            padding: 4px; /* Espaço para a luz brilhar */
+            padding: 4px;
             border-radius: 20px;
-            overflow: hidden; /* Garante que a luz fique no contorno */
+            overflow: hidden;
             background: rgba(255, 255, 255, 0.05);
         }
 
-        /* O Feixe de luz */
         .preview-container::before {
             content: "";
             position: absolute;
@@ -66,12 +65,12 @@
             animation: rotateLight 4s linear infinite;
         }
 
-        /* Camada interna para manter o fundo escuro e o canvas visível */
         .preview-inner {
             position: relative;
             background: var(--bg-deep);
             border-radius: 16px;
             z-index: 1;
+            touch-action: none; /* Impede scroll ao arrastar no canvas */
         }
 
         @keyframes rotateLight {
@@ -87,28 +86,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        input[type=range] { 
-            -webkit-appearance: none; 
-            -moz-appearance: none;
-            appearance: none; 
-            background: transparent; 
-        }
-
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; }
-        
-        input[type=range]::-webkit-slider-thumb { 
-            -webkit-appearance: none; 
-            appearance: none;
-            height: 18px; width: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); 
-        }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 18px; width: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
 
         #welcomeCanvas { border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); max-width: 100%; background: #000; display: block; }
         .nav-btn { transition: all 0.2s; border-bottom: 2px solid transparent; }
         .nav-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
         .move-mode-active #welcomeCanvas { outline: 2px solid var(--accent); cursor: crosshair; }
-        
-        #dragOverlay { transition: opacity 0.5s ease; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -129,10 +114,8 @@
 
     <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <!-- Sidebar de Controles -->
         <div class="lg:col-span-4 order-2 lg:order-1">
             <div class="glass-panel p-6 sticky top-8">
-                
                 <div class="flex overflow-x-auto gap-4 mb-8 pb-2 no-scrollbar">
                     <button onclick="switchTab('panel-background', this)" class="nav-btn active px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Cena</button>
                     <button onclick="switchTab('panel-text', this)" class="nav-btn px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Texto</button>
@@ -146,129 +129,87 @@
                             <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Imagem de Fundo (URL)</label>
                             <input type="text" id="bgUrlInput" value="false" oninput="updateCanvas()" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 focus:outline-none focus:border-indigo-500 transition text-sm">
                         </div>
-                        
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Fundo</label>
-                                <input type="color" id="bgColorInput" value="#0b1323" oninput="updateCanvas()" class="w-full h-10 bg-transparent border-none cursor-pointer">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Fundo</label>
-                                <input type="text" id="bgColorHex" value="#0B1323" oninput="syncColor(this, 'bgColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase">
-                            </div>
+                            <div><label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Fundo</label><input type="color" id="bgColorInput" value="#0b1323" oninput="updateCanvas()" class="w-full h-10 bg-transparent border-none"></div>
+                            <div><label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Fundo</label><input type="text" id="bgColorHex" value="#0B1323" oninput="syncColor(this, 'bgColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase"></div>
                         </div>
-
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Box ID</label>
-                                <input type="color" id="idBoxColorInput" value="#454545" oninput="updateCanvas()" class="w-full h-10 bg-transparent border-none cursor-pointer">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Box</label>
-                                <input type="text" id="idBoxColorHex" value="#454545" oninput="syncColor(this, 'idBoxColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase">
-                            </div>
+                            <div><label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Box ID</label><input type="color" id="idBoxColorInput" value="#454545" oninput="updateCanvas()" class="w-full h-10 bg-transparent"></div>
+                            <div><label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Box</label><input type="text" id="idBoxColorHex" value="#454545" oninput="syncColor(this, 'idBoxColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase"></div>
                         </div>
-
-                        <hr class="border-white/5">
                         <div class="space-y-4">
-                            <h4 class="text-sm font-bold text-indigo-400">Dimensões Avatares</h4>
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-xs mb-1"><span>Raio Usuário</span><span id="userRadiusValue" class="text-indigo-400">66</span></div>
-                                <input type="range" id="userRadius" min="10" max="150" value="66" oninput="updateCanvas()" class="w-full">
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-xs mb-1"><span>Raio Grupo</span><span id="groupRadiusValue" class="text-indigo-400">35</span></div>
-                                <input type="range" id="groupRadius" min="10" max="100" value="35" oninput="updateCanvas()" class="w-full">
-                            </div>
+                            <div class="flex justify-between text-xs mb-1"><span>Raio Usuário</span><span id="userRadiusValue" class="text-indigo-400">66</span></div>
+                            <input type="range" id="userRadius" min="10" max="150" value="66" oninput="updateCanvas()" class="w-full">
+                            <div class="flex justify-between text-xs mb-1"><span>Raio Grupo</span><span id="groupRadiusValue" class="text-indigo-400">35</span></div>
+                            <input type="range" id="groupRadius" min="10" max="100" value="35" oninput="updateCanvas()" class="w-full">
                         </div>
                     </div>
                 </div>
 
                 <div id="panel-text" class="panel">
                     <div class="space-y-6">
-                        <div>
-                            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Mensagem Principal</label>
-                            <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 focus:outline-none focus:border-indigo-500">
-                        </div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Mensagem Principal</label><input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3"></div>
                         <div class="space-y-1">
                             <div class="flex justify-between text-xs mb-1"><span>Tamanho da Fonte</span><span id="welcomeFontSizeValue" class="text-indigo-400">50</span></div>
                             <input type="range" id="welcomeFontSize" min="20" max="100" value="50" oninput="updateCanvas()" class="w-full">
                         </div>
+                        <!-- Reintroduzindo os inputs de cor que faltavam -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Boas-Vindas</label>
-                                <input type="color" id="welcomeColorInput" value="#ffffff" oninput="updateCanvas()" class="w-full h-10 bg-transparent">
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Texto</label>
+                                <input type="color" id="welcomeColorInput" value="#ffffff" oninput="updateCanvas()" class="w-full h-10 bg-transparent cursor-pointer">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Grupo</label>
-                                <input type="color" id="groupNameColorInput" value="#5DFCFC" oninput="updateCanvas()" class="w-full h-10 bg-transparent">
+                                <input type="color" id="groupNameColorInput" value="#ffd900" oninput="updateCanvas()" class="w-full h-10 bg-transparent cursor-pointer">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div id="panel-positions" class="panel">
-                    <p class="text-xs text-gray-400 mb-4 italic">Arraste os elementos no canvas ou use os controles abaixo.</p>
-                    <div class="space-y-4">
-                        <div class="p-3 bg-black/20 rounded-lg border border-white/5">
-                            <h5 class="text-xs font-bold uppercase text-indigo-300 mb-2">Posições Atuais</h5>
-                            <div class="grid grid-cols-2 gap-y-2 text-[10px]">
-                                <span>Usuário X/Y: <span id="userXValue" class="text-white">437</span> / <span id="userYValue" class="text-white">110</span></span>
-                                <span>Welcome X/Y: <span id="welcomeXValue" class="text-white">450</span> / <span id="welcomeYValue" class="text-white">230</span></span>
-                            </div>
+                    <p class="text-xs text-gray-400 mb-4 italic">Arraste os elementos no canvas.</p>
+                    <div class="p-3 bg-black/20 rounded-lg border border-white/5 mb-4">
+                        <div class="grid grid-cols-2 gap-y-2 text-[10px]">
+                            <span>Usuário X/Y: <span id="userXValue" class="text-white">437</span> / <span id="userYValue" class="text-white">110</span></span>
+                            <span>Welcome X/Y: <span id="welcomeXValue" class="text-white">450</span> / <span id="welcomeYValue" class="text-white">230</span></span>
                         </div>
-                        <button onclick="switchTab('panel-summary', this)" class="w-full py-3 bg-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/20">Finalizar e Exportar</button>
                     </div>
+                    <button onclick="switchTab('panel-summary', this)" class="w-full py-3 bg-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-500 transition shadow-lg">Finalizar e Exportar</button>
                 </div>
 
-                <div id="panel-help" class="panel">
-                    <div class="text-center">
-                        <div class="relative w-32 h-32 mx-auto mb-4">
-                            <img id="carousel-img" src="https://i.ibb.co/pBN6NM9h/Isis2.png" class="w-full h-full object-cover rounded-full border-2 border-indigo-500 p-1">
-                        </div>
-                        <p id="carousel-text" class="text-sm font-medium h-10 italic">ísis 💕</p>
-                        <div class="mt-4 text-left space-y-2 text-xs text-gray-400">
-                            <p>• O ID Box agora segue a cor configurada no seu padrão original.</p>
-                            <p>• Imagens não ficam mais esticadas (ajuste automático).</p>
-                        </div>
-                    </div>
+                <div id="panel-help" class="panel text-center">
+                    <img id="carousel-img" src="https://i.ibb.co/pBN6NM9h/Isis2.png" class="w-32 h-32 mx-auto mb-4 object-cover rounded-full border-2 border-indigo-500 p-1">
+                    <p id="carousel-text" class="text-xs italic text-gray-400">"Sua criatividade é o limite! 💕"</p>
                 </div>
 
                 <div id="panel-summary" class="panel">
-                    <h3 class="font-bold mb-4">Exportação Original</h3>
-                    <div id="summary-content" class="text-[10px] font-mono bg-black/40 p-3 rounded mb-4 overflow-hidden opacity-70 break-all leading-relaxed"></div>
-                    <div class="space-y-2">
-                        <button onclick="copyConfigAsBase64()" class="w-full py-2 bg-purple-600 rounded-lg text-sm font-bold hover:bg-purple-500">Copiar Modelo</button>
-                    </div>
+                    <div id="summary-content" class="text-[10px] font-mono bg-black/40 p-3 rounded mb-4 break-all opacity-70"></div>
+                    <button onclick="copyConfigAsBase64()" class="w-full py-2 bg-purple-600 rounded-lg text-sm font-bold">Copiar Modelo</button>
                 </div>
-
             </div>
         </div>
 
-        <!-- Área do Canvas com o Efeito Neon -->
-        <div class="lg:col-span-8 order-1 lg:order-2 flex flex-col items-center justify-start">
+        <div class="lg:col-span-8 order-1 lg:order-2 flex flex-col items-center">
             <div class="w-full flex justify-between items-center mb-4 px-2">
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Live Preview</span>
+                <span class="text-xs font-bold text-gray-500 uppercase">Live Preview</span>
                 <span class="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">900x350 px</span>
             </div>
             
-            <!-- Container com Animação de Luz -->
             <div class="preview-container">
                 <div class="preview-inner relative group">
                     <canvas id="welcomeCanvas" width="900" height="350"></canvas>
-                    <div id="dragOverlay" class="absolute inset-0 pointer-events-none border-2 border-indigo-500 rounded-xl opacity-0 flex items-center justify-center">
+                    <div id="dragOverlay" class="absolute inset-0 pointer-events-none border-2 border-indigo-500 rounded-xl opacity-0 flex items-center justify-center transition-opacity duration-500">
                         <span class="bg-indigo-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-xl">MODO ARRASTO ATIVO</span>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
 
     <script>
         const FIXED_USER_NAME = 'Sarah_Jones#7489';
-        const CANVAS_CENTER_X = 450;
-        const CANVAS_CENTER_Y = 175;
+        const CANVAS_CENTER_X = 450, CANVAS_CENTER_Y = 175;
 
         let state = {
             userX: 437, userY: 110,
@@ -283,8 +224,6 @@
         let isDragging = false, draggedElement = null;
         let imageCache = new Map();
         let activeGuides = { x: null, y: null };
-        
-        let overlayTimer = null;
 
         function switchTab(panelId, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -302,60 +241,29 @@
             state.isMoveModeActive = !state.isMoveModeActive;
             const btn = document.getElementById('toggleMoveModeButton');
             const overlay = document.getElementById('dragOverlay');
-            
             document.getElementById('moveText').innerText = state.isMoveModeActive ? "Sair do Modo Arrasto" : "Modo Arrasto";
             btn.classList.toggle('bg-indigo-600', state.isMoveModeActive);
             document.body.classList.toggle('move-mode-active', state.isMoveModeActive);
-
-            if (overlayTimer) clearTimeout(overlayTimer);
-
-            if (state.isMoveModeActive) {
-                overlay.style.opacity = "1";
-                overlayTimer = setTimeout(() => {
-                    overlay.style.opacity = "0";
-                }, 3000);
-            } else {
-                overlay.style.opacity = "0";
-                activeGuides = { x: null, y: null };
-            }
-            
+            overlay.style.opacity = state.isMoveModeActive ? "1" : "0";
+            if (state.isMoveModeActive) setTimeout(() => overlay.style.opacity = "0", 3000);
             updateCanvas();
         }
 
-        function drawCoverImage(ctx, img, x, y, w, h) {
-            const imgRatio = img.width / img.height;
-            const canvasRatio = w / h;
-            let sx, sy, sw, sh;
-            if (imgRatio > canvasRatio) { sw = img.height * canvasRatio; sh = img.height; sx = (img.width - sw) / 2; sy = 0; }
-            else { sw = img.width; sh = img.width / canvasRatio; sx = 0; sy = (img.height - sh) / 2; }
-            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-        }
-
-        function drawAlignmentGuides() {
-            if (!isDragging || !state.isMoveModeActive) return;
-            ctx.save();
-            ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = '#6366f1'; 
-            ctx.lineWidth = 1;
-
-            if (activeGuides.x !== null) {
-                ctx.beginPath(); ctx.moveTo(activeGuides.x, 0); ctx.lineTo(activeGuides.x, canvas.height); ctx.stroke();
-            }
-            if (activeGuides.y !== null) {
-                ctx.beginPath(); ctx.moveTo(0, activeGuides.y); ctx.lineTo(canvas.width, activeGuides.y); ctx.stroke();
-            }
-            ctx.restore();
-        }
-
         async function updateCanvas() {
+            // Verifica se todos os elementos existem antes de tentar ler valores
+            const elWelcomeColor = document.getElementById('welcomeColorInput');
+            const elGroupColor = document.getElementById('groupNameColorInput');
+            
+            if (!elWelcomeColor || !elGroupColor) return; // Segurança extra
+
             const config = {
                 bgUrl: document.getElementById('bgUrlInput').value,
                 bgColor: document.getElementById('bgColorInput').value,
                 idBoxColor: document.getElementById('idBoxColorInput').value,
                 welcomeText: document.getElementById('welcomeTextInput').value,
                 welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
-                welcomeColor: document.getElementById('welcomeColorInput').value,
-                groupNameColor: document.getElementById('groupNameColorInput').value,
+                welcomeColor: elWelcomeColor.value,
+                groupNameColor: elGroupColor.value,
                 userRadius: parseInt(document.getElementById('userRadius').value),
                 groupRadius: parseInt(document.getElementById('groupRadius').value)
             };
@@ -365,8 +273,9 @@
 
             ctx.fillStyle = config.bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             const bgImg = await loadImageAsync(config.bgUrl);
-            if (bgImg) drawCoverImage(ctx, bgImg, 0, 0, canvas.width, canvas.height);
+            if (bgImg) drawCover(ctx, bgImg, 0, 0, canvas.width, canvas.height);
 
             const userImg = await loadImageAsync("https://i.ibb.co/N6nNsRYf/lua.gif");
             const groupImg = await loadImageAsync("https://i.ibb.co/PsV0zCTw/si.jpg");
@@ -374,7 +283,7 @@
             drawCircularImage(ctx, state.userX, state.userY, config.userRadius, userImg, '#43B581');
             drawCircularImage(ctx, state.groupX, state.groupY, config.groupRadius, groupImg, '#ED4245');
 
-            ctx.font = `800 ${config.welcomeFontSize}px TTRunsTrialExtraBold, Inter, sans-serif`;
+            ctx.font = `800 ${config.welcomeFontSize}px TTRunsTrialExtraBold, sans-serif`;
             ctx.fillStyle = config.welcomeColor;
             ctx.textAlign = 'center';
             ctx.fillText(config.welcomeText, state.welcomeX, state.welcomeY);
@@ -383,12 +292,16 @@
             const metrics = ctx.measureText(FIXED_USER_NAME);
             const boxW = metrics.width + 40, boxH = 40;
             ctx.fillStyle = config.idBoxColor;
-            roundRect(ctx, state.idBoxX - boxW/2, state.idBoxY - boxH/2, boxW, boxH, 20, true);
+            ctx.beginPath(); ctx.roundRect(state.idBoxX - boxW/2, state.idBoxY - boxH/2, boxW, boxH, 20); ctx.fill();
             ctx.fillStyle = config.groupNameColor;
             ctx.textBaseline = 'middle';
             ctx.fillText(FIXED_USER_NAME, state.idBoxX, state.idBoxY + 2);
 
-            drawAlignmentGuides();
+            if (isDragging) {
+                ctx.setLineDash([5, 5]); ctx.strokeStyle = '#6366f1';
+                if (activeGuides.x !== null) { ctx.beginPath(); ctx.moveTo(activeGuides.x, 0); ctx.lineTo(activeGuides.x, canvas.height); ctx.stroke(); }
+                if (activeGuides.y !== null) { ctx.beginPath(); ctx.moveTo(0, activeGuides.y); ctx.lineTo(canvas.width, activeGuides.y); ctx.stroke(); }
+            }
 
             document.getElementById('userRadiusValue').innerText = config.userRadius;
             document.getElementById('groupRadiusValue').innerText = config.groupRadius;
@@ -398,51 +311,25 @@
             document.getElementById('welcomeXValue').innerText = Math.round(state.welcomeX);
             document.getElementById('welcomeYValue').innerText = Math.round(state.welcomeY);
             
-            updateSummary(config);
+            document.getElementById('summary-content').innerText = JSON.stringify({
+                ...config, ...state
+            });
         }
 
-        function generateFinalData(config) {
-            return {
-                bgUrl: config.bgUrl, bgColor: config.bgColor, welcomeText: config.welcomeText,
-                welcomeColor: config.welcomeColor, groupNameColor: config.groupNameColor,
-                idBoxColor: config.idBoxColor, userRadius: config.userRadius, groupRadius: config.groupRadius,
-                welcomeFontSize: config.welcomeFontSize, userX: Math.round(state.userX), userY: Math.round(state.userY),
-                groupX: Math.round(state.groupX), groupY: Math.round(state.groupY),
-                welcomeX: Math.round(state.welcomeX), welcomeY: Math.round(state.welcomeY),
-                idBoxX: Math.round(state.idBoxX), idBoxY: Math.round(state.idBoxY)
-            };
-        }
-
-        function updateSummary(config) {
-            const data = generateFinalData(config);
-            document.getElementById('summary-content').innerText = JSON.stringify(data);
-        }
-
-        function copyConfigAsBase64() {
-            const config = {
-                bgUrl: document.getElementById('bgUrlInput').value,
-                bgColor: document.getElementById('bgColorInput').value,
-                idBoxColor: document.getElementById('idBoxColorInput').value,
-                welcomeText: document.getElementById('welcomeTextInput').value,
-                welcomeColor: document.getElementById('welcomeColorInput').value,
-                groupNameColor: document.getElementById('groupNameColorInput').value,
-                userRadius: parseInt(document.getElementById('userRadius').value),
-                groupRadius: parseInt(document.getElementById('groupRadius').value),
-                welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value)
-            };
-            const data = generateFinalData(config);
-            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-            navigator.clipboard.writeText(b64);
-            alert("Modelo Original Copiado! 🚀");
+        function drawCover(ctx, img, x, y, w, h) {
+            const r = img.width / img.height, cr = w / h;
+            let sx, sy, sw, sh;
+            if (r > cr) { sw = img.height * cr; sh = img.height; sx = (img.width - sw) / 2; sy = 0; }
+            else { sw = img.width; sh = img.width / cr; sx = 0; sy = (img.height - sh) / 2; }
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
         function drawCircularImage(ctx, x, y, r, img, fallback) {
             ctx.save();
             ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
             if (img) {
-                const scale = Math.max(r * 2 / img.width, r * 2 / img.height);
-                const width = img.width * scale; const height = img.height * scale;
-                ctx.drawImage(img, x - width / 2, y - height / 2, width, height);
+                const s = Math.max(r * 2 / img.width, r * 2 / img.height);
+                ctx.drawImage(img, x - (img.width * s) / 2, y - (img.height * s) / 2, img.width * s, img.height * s);
             } else { ctx.fillStyle = fallback; ctx.fill(); }
             ctx.restore();
             ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2;
@@ -460,60 +347,57 @@
             });
         }
 
-        function roundRect(ctx, x, y, width, height, radius, fill) {
-            ctx.beginPath(); ctx.roundRect(x, y, width, height, radius); ctx.closePath();
-            if (fill) ctx.fill();
-        }
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: (cx - rect.left) * (900 / rect.width), y: (cy - rect.top) * (350 / rect.height) };
-        }
-
-        canvas.onmousedown = (e) => {
+        function handleStart(e) {
             if(!state.isMoveModeActive) return;
             const pos = getMousePos(e);
-            if(Math.hypot(pos.x - state.userX, pos.y - state.userY) < 60) draggedElement = 'user';
-            else if(Math.hypot(pos.x - state.groupX, pos.y - state.groupY) < 40) draggedElement = 'group';
+            if(Math.hypot(pos.x - state.userX, pos.y - state.userY) < 70) draggedElement = 'user';
+            else if(Math.hypot(pos.x - state.groupX, pos.y - state.groupY) < 50) draggedElement = 'group';
             else if(Math.abs(pos.y - state.welcomeY) < 40) draggedElement = 'welcome';
             else if(Math.abs(pos.y - state.idBoxY) < 30) draggedElement = 'idBox';
             if(draggedElement) isDragging = true;
-        };
+        }
 
-        window.onmousemove = (e) => {
+        function handleMove(e) {
             if(!isDragging) return;
+            if(e.cancelable) e.preventDefault();
             const pos = getMousePos(e);
             let nx = pos.x, ny = pos.y;
-            
             activeGuides = { x: null, y: null };
-            const SNAP_DISTANCE = 10;
 
-            if(Math.abs(nx - CANVAS_CENTER_X) < SNAP_DISTANCE) { nx = CANVAS_CENTER_X; activeGuides.x = CANVAS_CENTER_X; }
-            if(Math.abs(ny - CANVAS_CENTER_Y) < SNAP_DISTANCE) { ny = CANVAS_CENTER_Y; activeGuides.y = CANVAS_CENTER_Y; }
-
-            const otherElements = [
-                {x: state.userX, y: state.userY, id: 'user'},
-                {x: state.groupX, y: state.groupY, id: 'group'},
-                {x: state.welcomeX, y: state.welcomeY, id: 'welcome'},
-                {x: state.idBoxX, y: state.idBoxY, id: 'idBox'}
-            ].filter(el => el.id !== draggedElement);
-
-            otherElements.forEach(el => {
-                if(Math.abs(nx - el.x) < SNAP_DISTANCE) { nx = el.x; activeGuides.x = el.x; }
-                if(Math.abs(ny - el.y) < SNAP_DISTANCE) { ny = el.y; activeGuides.y = el.y; }
-            });
+            if(Math.abs(nx - CANVAS_CENTER_X) < 10) { nx = CANVAS_CENTER_X; activeGuides.x = CANVAS_CENTER_X; }
+            if(Math.abs(ny - CANVAS_CENTER_Y) < 10) { ny = CANVAS_CENTER_Y; activeGuides.y = CANVAS_CENTER_Y; }
 
             if(draggedElement === 'user') { state.userX = nx; state.userY = ny; }
             else if(draggedElement === 'group') { state.groupX = nx; state.groupY = ny; }
             else if(draggedElement === 'welcome') { state.welcomeX = nx; state.welcomeY = ny; }
             else if(draggedElement === 'idBox') { state.idBoxX = nx; state.idBoxY = ny; }
-            
             updateCanvas();
-        };
+        }
 
-        window.onmouseup = () => { isDragging = false; draggedElement = null; activeGuides = { x: null, y: null }; updateCanvas(); };
+        function handleEnd() { isDragging = false; draggedElement = null; activeGuides = { x: null, y: null }; updateCanvas(); }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (clientX - rect.left) * (900 / rect.width), y: (clientY - rect.top) * (350 / rect.height) };
+        }
+
+        // Eventos unificados (Mouse + Touch)
+        canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+
+        function copyConfigAsBase64() {
+            const data = JSON.parse(document.getElementById('summary-content').innerText);
+            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            navigator.clipboard.writeText(b64);
+            alert("Modelo Copiado! 🚀");
+        }
 
         window.onload = () => {
             updateCanvas();
