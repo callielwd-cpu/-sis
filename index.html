@@ -3,1037 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Card</title>
+    <title>Isis Studio | Editor de Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         
-        /* 🎨 MUDANÇA APLICADA AQUI: Configuração da fonte TTRuns com peso ExtraBold (800) */
         @font-face {
             font-family: 'TTRunsTrialExtraBold';
-            /* Se você tiver o TT Runs Trial ExtraBold.ttf, o URL deve ser:
-               src: url('seu-caminho-para/TT Runs Trial ExtraBold.ttf') format('truetype');
-               Usei a mesma CDN que você forneceu, mas com um nome de família mais específico.
-            */
             src: url('https://fonts.cdnfonts.com/s/32463/TT%20Runs%20Bold.woff') format('woff');
-            font-weight: 800; /* ExtraBold geralmente é 800 */
+            font-weight: 800;
             font-style: normal;
+        }
+
+        :root {
+            --bg-deep: #0a0f18;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #6366f1;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #101d25;
-            color: #e9edef;
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 35%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .panel {
-            display: none;
-            padding: 1rem;
-            border-top: 1px solid #374151;
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
         }
 
-        .panel.active {
-            display: block;
+        /* --- EFEITO DE LUZ ANIMADA NO CARD --- */
+        .preview-container {
+            position: relative;
+            padding: 4px; /* Espaço para a luz brilhar */
+            border-radius: 20px;
+            overflow: hidden; /* Garante que a luz fique no contorno */
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .range-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
+        /* O Feixe de luz */
+        .preview-container::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent, 
+                rgba(99, 102, 241, 0.8), 
+                rgba(168, 85, 247, 0.8), 
+                transparent 30%
+            );
+            animation: rotateLight 4s linear infinite;
         }
 
-        .range-container label {
-            width: 150px;
-            font-size: 0.875rem;
+        /* Camada interna para manter o fundo escuro e o canvas visível */
+        .preview-inner {
+            position: relative;
+            background: var(--bg-deep);
+            border-radius: 16px;
+            z-index: 1;
         }
 
-        .range-container input[type="range"] {
-            flex-grow: 1;
-            margin: 0 10px;
+        @keyframes rotateLight {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .range-container span {
-            width: 40px;
-            text-align: right;
-            font-weight: bold;
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.25rem 0;
-            border-bottom: 1px dashed #374151;
-            font-size: 0.875rem;
+        input[type=range] { 
+            -webkit-appearance: none; 
+            -moz-appearance: none;
+            appearance: none; 
+            background: transparent; 
         }
 
-        /* Estilos do Canvas para arrasto */
-        #welcomeCanvas {
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            touch-action: none; /* Impede o scroll touch ao arrastar */
-        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; }
         
-        .canvas-draggable {
-            cursor: grab;
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            appearance: none;
+            height: 18px; width: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); 
         }
+
+        #welcomeCanvas { border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); max-width: 100%; background: #000; display: block; }
+        .nav-btn { transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .nav-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .move-mode-active #welcomeCanvas { outline: 2px solid var(--accent); cursor: crosshair; }
         
-        .dragging {
-            cursor: grabbing !important;
-        }
+        #dragOverlay { transition: opacity 0.5s ease; }
     </style>
 </head>
-<body class="p-4">
-    <h1 class="text-3xl font-bold mb-6 text-center text-white">
-        🎨 Editor de Card <span style="color:#7289da;">Welcome</span>
-    </h1>
+<body class="p-4 md:p-8">
 
-    <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
-
-        <div class="lg:w-2/3 bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col items-center">
-            <h2 class="text-xl font-semibold mb-3">Pré-visualização do Card</h2>
-            <canvas id="welcomeCanvas" width="900" height="350" class="w-full lg:w-[900px] h-auto max-h-[350px]"></canvas>
-
-            <button id="toggleMoveModeButton"
-                onclick="toggleMoveMode()"
-                class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 mt-4 w-full lg:w-96">
-                Ativar Modo Arrasto
+    <header class="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-4xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                ISIS STUDIO <span class="text-sm font-light text-gray-500 ml-2 tracking-widest uppercase">v2.0 Upgrade</span>
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="toggleMoveModeButton" onclick="toggleMoveMode()" 
+                class="px-6 py-2 rounded-full border border-indigo-500/50 hover:bg-indigo-500/20 transition font-semibold text-sm flex items-center gap-2">
+                <span id="moveIcon">🎯</span> <span id="moveText">Modo Arrasto</span>
             </button>
         </div>
+    </header>
 
-        <div class="lg:w-1/3 bg-gray-900 p-6 rounded-xl shadow-lg">
-
-            <div class="mb-4">
-                <label for="panelSelect" class="block text-sm font-medium mb-1">Selecione o Painel de Ajustes:</label>
-                <select id="panelSelect" onchange="onPanelChange()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="panel-help">Ísis Manual ✨</option>
-                    <option value="panel-background">Background 🖼️</option>
-                    <option value="panel-positions">Posicionamento (X, Y) ⚙️</option>
-                    <option value="panel-text">Texto e Cores 🎨</option>
-                    <option value="panel-summary">Visualizar e salvar</option>
-                </select>
-            </div>
-
-            <div id="panel-background" class="panel active">
-                <h3 class="text-lg font-bold mb-3">🖼️ Background</h3>
-
-                <div class="mb-3">
-                    <label for="bgUrlInput" class="block text-sm font-medium mb-1">URL da Imagem de Fundo (ou 'false'):</label>
-                    <input type="text" id="bgUrlInput" value="false" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Sidebar de Controles -->
+        <div class="lg:col-span-4 order-2 lg:order-1">
+            <div class="glass-panel p-6 sticky top-8">
+                
+                <div class="flex overflow-x-auto gap-4 mb-8 pb-2 no-scrollbar">
+                    <button onclick="switchTab('panel-background', this)" class="nav-btn active px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Cena</button>
+                    <button onclick="switchTab('panel-text', this)" class="nav-btn px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Texto</button>
+                    <button onclick="switchTab('panel-positions', this)" class="nav-btn px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Ajustes</button>
+                    <button onclick="switchTab('panel-help', this)" class="nav-btn px-3 py-1 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Ajuda</button>
                 </div>
 
-                <div class="mb-3">
-                    <label for="bgColorInput" class="block text-sm font-medium mb-1">Cor Sólida de Fundo (HEX):</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="bgColorInput" value="#0b1323" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
-                        <input type="text" id="bgColorHex" value="#0b1323" oninput="document.getElementById('bgColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
-                    </div>
-                </div>
-
-                <hr class="border-gray-700 my-4">
-
-                <h4 class="font-semibold mb-2">Avatares</h4>
-
-                <div class="mb-3">
-                    <label for="userPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil usuario:</label>
-                    <input type="text" id="userPicUrlInput" value="https://i.ibb.co/N6nNsRYf/lua.gif" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
-                </div>
-
-                <div class="range-container">
-                    <label for="userRadius">Raio Usuário:</label>
-                    <input type="range" id="userRadius" min="10" max="100" value="66" step="1" oninput="updateCanvas()">
-                    <span id="userRadiusValue">66</span>
-                </div>
-
-                <div class="mb-3 mt-4">
-                    <label for="groupPicUrlInput" class="block text-sm font-medium mb-1">Ex perfil grupo:</label>
-                    <input type="text" id="groupPicUrlInput" value="https://i.ibb.co/PsV0zCTw/si.jpg" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
-                </div>
-
-                <div class="range-container">
-                    <label for="groupRadius">Raio Grupo:</label>
-                    <input type="range" id="groupRadius" min="10" max="100" value="35" step="1" oninput="updateCanvas()">
-                    <span id="groupRadiusValue">35</span>
-                </div>
-            </div>
-
-            <div id="panel-positions" class="panel">
-                <h3 class="text-lg font-bold mb-3">📍 Posições Centrais (0-900 / 0-350)</h3>
-
-                <h4 class="font-semibold mb-2 mt-4">Avatar do Usuário</h4>
-                <div class="range-container">
-                    <label for="userX">Posição X:</label>
-                    <input type="range" id="userX" min="0" max="900" value="437" step="1" oninput="updateCanvas()">
-                    <span id="userXValue">437</span>
-                </div>
-                <div class="range-container">
-                    <label for="userY">Posição Y:</label>
-                    <input type="range" id="userY" min="0" max="350" value="110" step="1" oninput="updateCanvas()">
-                    <span id="userYValue">110</span>
-                </div>
-
-                <h4 class="font-semibold mb-2 mt-4">Avatar do Grupo</h4>
-                <div class="range-container">
-                    <label for="groupX">Posição X:</label>
-                    <input type="range" id="groupX" min="0" max="900" value="655" step="1" oninput="updateCanvas()">
-                    <span id="groupXValue">655</span>
-                </div>
-                <div class="range-container">
-                    <label for="groupY">Posição Y:</label>
-                    <input type="range" id="groupY" min="0" max="350" value="300" step="1" oninput="updateCanvas()">
-                    <span id="groupYValue">300</span>
-                </div>
-
-                <h4 class="font-semibold mb-2 mt-4">Texto de Boas-Vindas (Arrastável)</h4>
-                <div class="range-container">
-                    <label>Posição X:</label>
-                    <span id="welcomeXValue">450</span>
-                </div>
-                <div class="range-container">
-                    <label>Posição Y:</label>
-                    <span id="welcomeYValue">230</span>
-                </div>
-
-                <h4 class="font-semibold mb-2 mt-4">Box ID (Arrastável)</h4>
-                <div class="range-container">
-                    <label>Posição X:</label>
-                    <span id="idBoxXValue">450</span>
-                </div>
-                <div class="range-container">
-                    <label>Posição Y:</label>
-                    <span id="idBoxYValue">310</span>
-                </div>
-            </div>
-
-            <div id="panel-text" class="panel">
-                <h3 class="text-lg font-bold mb-3">🔠 Texto e Cores</h3>
-
-                <div class="mb-3">
-                    <label for="welcomeTextInput" class="block text-sm font-medium mb-1">Texto de Boas-Vindas:</label>
-                    <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white">
-                </div>
-
-                <div class="range-container mb-3">
-                    <label for="welcomeFontSize">Tamanho da Fonte:</label>
-                    <input type="range" id="welcomeFontSize" min="20" max="100" value="50" step="1" oninput="updateCanvas()">
-                    <span id="welcomeFontSizeValue">50</span>
-                </div>
-
-                <div class="mb-3">
-                    <label for="welcomeColorInput" class="block text-sm font-medium mb-1">Cor do Texto (Welcome):</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="welcomeColorInput" value="#ffffff" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
-                        <input type="text" id="welcomeColorHex" value="#ffffff" oninput="document.getElementById('welcomeColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
-                    </div>
-                </div>
-
-                <hr class="border-gray-700 my-4">
-
-                <div class="mb-3">
-                    <label for="groupNameColorInput" class="block text-sm font-medium mb-1">Cor do Nome do Grupo:</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="groupNameColorInput" value="#ffd900" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
-                        <input type="text" id="groupNameColorHex" value="#ffd900" oninput="document.getElementById('groupNameColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
-                    </div>
-                </div>
-
-                <hr class="border-gray-700 my-4">
-
-                <div class="mb-3">
-                    <label for="idBoxColorInput" class="block text-sm font-medium mb-1">Cor do Box ID:</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="idBoxColorInput" value="#454545" oninput="updateCanvas()" class="h-10 w-10 p-0 border-none rounded-md">
-                        <input type="text" id="idBoxColorHex" value="#454545" oninput="document.getElementById('idBoxColorInput').value=this.value; updateCanvas()" class="flex-grow bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white uppercase">
-                    </div>
-                </div>
-            </div>
-
-            <div id="panel-help" class="panel bg-gray-900 shadow-2xl rounded-xl p-6 max-w-sm mx-auto transform hover:scale-[1.01] transition duration-300 ease-in-out border border-indigo-700/50">
-                <div class="flex items-center justify-start mb-4 border-b border-indigo-800 pb-3">
-                    <span class="text-3xl mr-3" role="img" aria-label="Ajuda">✨</span>
-                    <h3 class="text-2xl font-extrabold text-white tracking-wider">Help-me</h3>
-                </div>
-
-                <div class="w-full mb-5 relative overflow-hidden rounded-xl shadow-lg">
-                    <img id="carousel-img" src="https://i.ibb.co/pBN6NM9h/Isis2.png" alt="Assistente Lexi" class="rounded-xl max-w-full transition duration-500 transform">
-                </div>
-
-                <div class="text-center text-white text-sm font-medium mt-2">
-                    <span id="carousel-text" class="transition-opacity duration-700 opacity-100">
-                        Oi! Eu sou <span style="color: #6666FF;">ísis</span> 💕
-                    </span>
-                </div>
-
-                <script>
-                    const imagens = [
-                        "https://i.ibb.co/Gf4fBpqc/Isis.png",
-                        "https://i.ibb.co/JjzFfXx9/Isis1.png",
-                        "https://i.ibb.co/0jp956XM/isi34.png",
-                        "https://i.ibb.co/fYdy2VJt/cardissi.png",
-                        "https://i.ibb.co/Gf4fBpqc/Isis.png"
-                    ];
-
-                    const textos = [
-                        'Melhor Bot <span style="color:#25D366;">whatsapp</span> com welcome.',
-                        'É hora de <span style="color:#B7FF00;">brilhar</span> no seu grupo! 🌟',
-                        'Personalização✨',
-                        'Dê <span style="color:#EEFF00;">boas-vindas</span> com estilo! 🎉',
-                        'Vamos criar algo <span style="color:#FF8C00;">incrível?</span> 💖'
-                    ];
-
-                    let index = 0;
-                    const img = document.getElementById("carousel-img");
-                    const txt = document.getElementById("carousel-text");
-
-                    setInterval(() => {
-                        index = (index + 1) % imagens.length;
-                        img.classList.add("opacity-0");
-                        txt.classList.add("opacity-0");
-
-                        setTimeout(() => {
-                            img.src = imagens[index];
-                            txt.innerHTML = textos[index]; // ✅ agora o <span> é renderizado com cor
-                            img.classList.remove("opacity-0");
-                            txt.classList.remove("opacity-0");
-                        }, 700);
-                    }, 3500);
-                </script>
-
-
-                <p class="text-sm mb-4 font-semibold italic" style="color:#a78bfa;">
-                    🛠️ Bem-vindo(a) ao seu centro de configurações! Veja o que você pode otimizar:
-                </p>
-
-                <ul class="space-y-3 mb-6">
-                    <li class="flex items-start text-sm text-gray-200">
-                        <span class="text-indigo-400 mr-3 mt-1">●</span>
+                <div id="panel-background" class="panel active">
+                    <div class="space-y-6">
                         <div>
-                            <strong class="text-[#37ff77]">🖼️ Background:</strong>
-                            Ajuste do perfil de usuário, perfil do grupo e imagem de fundo. Caso não queira usar imagem, deixe 'false'. Para cor sólida, use o código HEX.
+                            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Imagem de Fundo (URL)</label>
+                            <input type="text" id="bgUrlInput" value="false" oninput="updateCanvas()" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 focus:outline-none focus:border-indigo-500 transition text-sm">
                         </div>
-                    </li>
-                    <li class="flex items-start text-sm text-gray-200">
-                        <span class="text-indigo-400 mr-3 mt-1">●</span>
-                        <div>
-                            <strong class="text-[#37ff77]">Posicionamento X e Y:</strong>
-                            Visualize as posições e parâmetros do seu card em tempo real.
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Fundo</label>
+                                <input type="color" id="bgColorInput" value="#0b1323" oninput="updateCanvas()" class="w-full h-10 bg-transparent border-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Fundo</label>
+                                <input type="text" id="bgColorHex" value="#0B1323" oninput="syncColor(this, 'bgColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase">
+                            </div>
                         </div>
-                    </li>
-                    <li class="flex items-start text-sm text-gray-200">
-                        <span class="text-indigo-400 mr-3 mt-1">●</span>
-                        <div>
-                            <strong class="text-[#37ff77]">🔠 Texto e Cores:</strong>
-                            Personalize o texto, tamanho da fonte e cores do grupo e Box.
-                        </div>
-                    </li>
-                    <li class="flex items-start text-sm text-gray-200">
-                        <span class="text-indigo-400 mr-3 mt-1">●</span>
-                        <div>
-                            <strong class="text-[#7da565]">Visualização e Salvar:</strong>
-                            Veja tudo antes de copiar o modelo e enviar com o comando.
-                        </div>
-                    </li>
-                </ul>
 
-                <div class="mt-6 bg-indigo-900/40 p-5 rounded-xl border border-indigo-700">
-                    <div class="flex items-center mb-2">
-                        <span class="text-lg text-indigo-400 font-extrabold mr-2">💡</span>
-                        <span class="font-bold text-white text-base">Pronto para usar o modelo?</span>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Box ID</label>
+                                <input type="color" id="idBoxColorInput" value="#454545" oninput="updateCanvas()" class="w-full h-10 bg-transparent border-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">HEX Box</label>
+                                <input type="text" id="idBoxColorHex" value="#454545" oninput="syncColor(this, 'idBoxColorInput')" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-2 text-center text-sm uppercase">
+                            </div>
+                        </div>
+
+                        <hr class="border-white/5">
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-bold text-indigo-400">Dimensões Avatares</h4>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs mb-1"><span>Raio Usuário</span><span id="userRadiusValue" class="text-indigo-400">66</span></div>
+                                <input type="range" id="userRadius" min="10" max="150" value="66" oninput="updateCanvas()" class="w-full">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs mb-1"><span>Raio Grupo</span><span id="groupRadiusValue" class="text-indigo-400">35</span></div>
+                                <input type="range" id="groupRadius" min="10" max="100" value="35" oninput="updateCanvas()" class="w-full">
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-sm text-indigo-200 mt-1">
-                        Lembre-se: finalize e use o comando <strong class="text-white">"!cardwelcome"</strong> com o código copiado no menu <strong class="text-white">"Visualizar e salvar"</strong>.
-                    </p>
-
-                    <a href="https://seusite.com/salvar" class="w-full block text-center mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/50 transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
-                        Mais detalhes
-                    </a>
                 </div>
-            </div>
 
-            <div id="panel-summary" class="panel">
-                <h3 class="text-lg font-bold mb-3">📊 Resumo dos Ajustes</h3>
-                <div id="summary-content" class="mb-4 bg-gray-800 p-3 rounded-md">Carregando resumo...</div>
+                <div id="panel-text" class="panel">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Mensagem Principal</label>
+                            <input type="text" id="welcomeTextInput" value="Bem Vindo(a)" oninput="updateCanvas()" class="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs mb-1"><span>Tamanho da Fonte</span><span id="welcomeFontSizeValue" class="text-indigo-400">50</span></div>
+                            <input type="range" id="welcomeFontSize" min="20" max="100" value="50" oninput="updateCanvas()" class="w-full">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Boas-Vindas</label>
+                                <input type="color" id="welcomeColorInput" value="#ffffff" oninput="updateCanvas()" class="w-full h-10 bg-transparent">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Cor Grupo</label>
+                                <input type="color" id="groupNameColorInput" value="#5DFCFC" oninput="updateCanvas()" class="w-full h-10 bg-transparent">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <button onclick="copyConfigAsJson()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
-                    📋 Copiar JSON para a Área de Transferência
-                </button>
+                <div id="panel-positions" class="panel">
+                    <p class="text-xs text-gray-400 mb-4 italic">Arraste os elementos no canvas ou use os controles abaixo.</p>
+                    <div class="space-y-4">
+                        <div class="p-3 bg-black/20 rounded-lg border border-white/5">
+                            <h5 class="text-xs font-bold uppercase text-indigo-300 mb-2">Posições Atuais</h5>
+                            <div class="grid grid-cols-2 gap-y-2 text-[10px]">
+                                <span>Usuário X/Y: <span id="userXValue" class="text-white">437</span> / <span id="userYValue" class="text-white">110</span></span>
+                                <span>Welcome X/Y: <span id="welcomeXValue" class="text-white">450</span> / <span id="welcomeYValue" class="text-white">230</span></span>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('panel-summary', this)" class="w-full py-3 bg-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/20">Finalizar e Exportar</button>
+                    </div>
+                </div>
 
-                <button onclick="exportConfigAsJson()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
-                    ⬇️ Exportar Config (.json)
-                </button>
+                <div id="panel-help" class="panel">
+                    <div class="text-center">
+                        <div class="relative w-32 h-32 mx-auto mb-4">
+                            <img id="carousel-img" src="https://i.ibb.co/pBN6NM9h/Isis2.png" class="w-full h-full object-cover rounded-full border-2 border-indigo-500 p-1">
+                        </div>
+                        <p id="carousel-text" class="text-sm font-medium h-10 italic">ísis 💕</p>
+                        <div class="mt-4 text-left space-y-2 text-xs text-gray-400">
+                            <p>• O ID Box agora segue a cor configurada no seu padrão original.</p>
+                            <p>• Imagens não ficam mais esticadas (ajuste automático).</p>
+                        </div>
+                    </div>
+                </div>
 
-                <button onclick="copyConfigAsBase64()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition duration-200 w-full mt-2">
-                    🔑 Copiar meu modelo
-                </button>
+                <div id="panel-summary" class="panel">
+                    <h3 class="font-bold mb-4">Exportação Original</h3>
+                    <div id="summary-content" class="text-[10px] font-mono bg-black/40 p-3 rounded mb-4 overflow-hidden opacity-70 break-all leading-relaxed"></div>
+                    <div class="space-y-2">
+                        <button onclick="copyConfigAsBase64()" class="w-full py-2 bg-purple-600 rounded-lg text-sm font-bold hover:bg-purple-500">Copiar Modelo</button>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
-</body>
 
-<script>
-    const FIXED_USER_NAME = 'Sarah_Jones#7489';
-    const FIXED_GROUP_NAME = 'Grup ísis✨';
-    const USER_FALLBACK_COLOR = '#43B581';
-    const GROUP_FALLBACK_COLOR = '#ED4245';
-    const STORAGE_SELECTED_PANEL_KEY = 'welcome_canvas_selected_panel';
-    
-    // 🟢 Constantes para Smart Guides
-    const ALIGN_TOLERANCE = 5; // Tolerância de pixels para o alinhamento
-    const CANVAS_CENTER_X = 450;
-    const CANVAS_CENTER_Y = 175;
-    let activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
-    // ----------------------------------------
+        <!-- Área do Canvas com o Efeito Neon -->
+        <div class="lg:col-span-8 order-1 lg:order-2 flex flex-col items-center justify-start">
+            <div class="w-full flex justify-between items-center mb-4 px-2">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Live Preview</span>
+                <span class="text-[10px] px-2 py-1 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">900x350 px</span>
+            </div>
+            
+            <!-- Container com Animação de Luz -->
+            <div class="preview-container">
+                <div class="preview-inner relative group">
+                    <canvas id="welcomeCanvas" width="900" height="350"></canvas>
+                    <div id="dragOverlay" class="absolute inset-0 pointer-events-none border-2 border-indigo-500 rounded-xl opacity-0 flex items-center justify-center">
+                        <span class="bg-indigo-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-xl">MODO ARRASTO ATIVO</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    /* 🎨 MUDANÇA APLICADA AQUI: Alterando o nome da fonte para o novo nome/peso */
-    const getWelcomeFont = () => {
-        const size = document.getElementById('welcomeFontSize').value;
-        return `800 ${size}px TTRunsTrialExtraBold, sans-serif`; 
-    };
-    const DEFAULT_FONT = '28px Inter, sans-serif';
+    </main>
 
-    // --- VARIÁVEIS DE ESTADO DE ARRASTO ---
-    let isDragging = false;
-    let draggedElement = null;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let isMoveModeActive = false;
-    // ----------------------------------------
+    <script>
+        const FIXED_USER_NAME = 'Sarah_Jones#7489';
+        const CANVAS_CENTER_X = 450;
+        const CANVAS_CENTER_Y = 175;
 
-    // Estado das posições (atualizado pelos ranges e pelo drag)
-    let state = {
-        userX: 437, userY: 110,
-        groupX: 655, groupY: 300,
-        welcomeX: 450, welcomeY: 230,
-        idBoxX: 450, idBoxY: 310
-    };
+        let state = {
+            userX: 437, userY: 110,
+            groupX: 655, groupY: 300,
+            welcomeX: 450, welcomeY: 230,
+            idBoxX: 450, idBoxY: 310,
+            isMoveModeActive: false
+        };
 
-    const canvas = document.getElementById('welcomeCanvas');
-    const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById('welcomeCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDragging = false, draggedElement = null;
+        let imageCache = new Map();
+        let activeGuides = { x: null, y: null };
+        
+        let overlayTimer = null;
 
-    function initializeState() {
-        state.userX = parseInt(document.getElementById('userX').value);
-        state.userY = parseInt(document.getElementById('userY').value);
-        state.groupX = parseInt(document.getElementById('groupX').value);
-        state.groupY = parseInt(document.getElementById('groupY').value);
-        state.welcomeX = 450; 
-        state.welcomeY = 230;
-        state.idBoxX = 450;
-        state.idBoxY = 310;
-    }
+        function switchTab(panelId, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(panelId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
 
-    // --- FUNÇÕES DE CARREGAMENTO E DESENHO DE IMAGEM ---
+        function syncColor(input, targetId) {
+            document.getElementById(targetId).value = input.value;
+            updateCanvas();
+        }
 
-    const loadImageAsync = (url) => {
-        return new Promise((resolve) => {
-            if (!url || url.trim() === '' || url.trim().toLowerCase() === 'false') return resolve(null);
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => resolve(img);
-            img.onerror = () => { console.error(`[INFO] Falha ao carregar imagem: ${url}`); resolve(null); };
-            img.src = url;
-        });
-    };
+        function toggleMoveMode() {
+            state.isMoveModeActive = !state.isMoveModeActive;
+            const btn = document.getElementById('toggleMoveModeButton');
+            const overlay = document.getElementById('dragOverlay');
+            
+            document.getElementById('moveText').innerText = state.isMoveModeActive ? "Sair do Modo Arrasto" : "Modo Arrasto";
+            btn.classList.toggle('bg-indigo-600', state.isMoveModeActive);
+            document.body.classList.toggle('move-mode-active', state.isMoveModeActive);
 
-    const drawCircularImage = (ctx, x, y, radius, image, fallbackColor) => {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2, true);
-        ctx.fillStyle = fallbackColor;
-        ctx.fill();
-        ctx.closePath();
-        ctx.restore();
+            if (overlayTimer) clearTimeout(overlayTimer);
 
-        if (image) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.clip();
-
-            const imgWidth = image.width;
-            const imgHeight = image.height;
-            const targetSize = radius * 2;
-            let sx, sy, sWidth, sHeight;
-            const imgRatio = imgWidth / imgHeight;
-            const targetRatio = 1;
-
-            if (imgRatio > targetRatio) {
-                sHeight = imgHeight;
-                sWidth = imgHeight * targetRatio;
-                sx = (imgWidth - sWidth) / 2;
-                sy = 0;
+            if (state.isMoveModeActive) {
+                overlay.style.opacity = "1";
+                overlayTimer = setTimeout(() => {
+                    overlay.style.opacity = "0";
+                }, 3000);
             } else {
-                sWidth = imgWidth;
-                sHeight = imgWidth / targetRatio;
-                sx = 0;
-                sy = (imgHeight - sHeight) / 2;
+                overlay.style.opacity = "0";
+                activeGuides = { x: null, y: null };
             }
+            
+            updateCanvas();
+        }
 
-            const dx = x - radius;
-            const dy = y - radius;
-            const dWidth = targetSize;
-            const dHeight = targetSize;
+        function drawCoverImage(ctx, img, x, y, w, h) {
+            const imgRatio = img.width / img.height;
+            const canvasRatio = w / h;
+            let sx, sy, sw, sh;
+            if (imgRatio > canvasRatio) { sw = img.height * canvasRatio; sh = img.height; sx = (img.width - sw) / 2; sy = 0; }
+            else { sw = img.width; sh = img.width / canvasRatio; sx = 0; sy = (img.height - sh) / 2; }
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        }
 
-            ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        function drawAlignmentGuides() {
+            if (!isDragging || !state.isMoveModeActive) return;
+            ctx.save();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#6366f1'; 
+            ctx.lineWidth = 1;
+
+            if (activeGuides.x !== null) {
+                ctx.beginPath(); ctx.moveTo(activeGuides.x, 0); ctx.lineTo(activeGuides.x, canvas.height); ctx.stroke();
+            }
+            if (activeGuides.y !== null) {
+                ctx.beginPath(); ctx.moveTo(0, activeGuides.y); ctx.lineTo(canvas.width, activeGuides.y); ctx.stroke();
+            }
             ctx.restore();
         }
-    };
 
-    // --- FUNÇÕES DE ARRASTO E HIT TEST ---
-    
-    function getMousePos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return {
-            x: (clientX - rect.left) * scaleX,
-            y: (clientY - rect.top) * scaleY
-        };
-    }
+        async function updateCanvas() {
+            const config = {
+                bgUrl: document.getElementById('bgUrlInput').value,
+                bgColor: document.getElementById('bgColorInput').value,
+                idBoxColor: document.getElementById('idBoxColorInput').value,
+                welcomeText: document.getElementById('welcomeTextInput').value,
+                welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
+                welcomeColor: document.getElementById('welcomeColorInput').value,
+                groupNameColor: document.getElementById('groupNameColorInput').value,
+                userRadius: parseInt(document.getElementById('userRadius').value),
+                groupRadius: parseInt(document.getElementById('groupRadius').value)
+            };
 
-    function getElementBounds(ctx, config) {
-        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
-        const ID_TEXT = FIXED_USER_NAME;
+            document.getElementById('bgColorHex').value = config.bgColor.toUpperCase();
+            document.getElementById('idBoxColorHex').value = config.idBoxColor.toUpperCase();
 
-        const userAvatarBounds = { x: state.userX, y: state.userY, radius: config.userRadius };
-        const groupAvatarBounds = { x: state.groupX, y: state.groupY, radius: config.groupRadius };
+            ctx.fillStyle = config.bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const bgImg = await loadImageAsync(config.bgUrl);
+            if (bgImg) drawCoverImage(ctx, bgImg, 0, 0, canvas.width, canvas.height);
 
-        const fontSize = document.getElementById('welcomeFontSize').value;
-        ctx.font = getWelcomeFont();
-        const welcomeMetrics = ctx.measureText(WELCOME_TEXT);
-        const welcomeWidth = welcomeMetrics.width;
-        const welcomeHeight = parseInt(fontSize) * 1.1; 
-        const welcomeBounds = {
-            x: state.welcomeX - welcomeWidth / 2, 
-            y: state.welcomeY - welcomeHeight,
-            width: welcomeWidth,
-            height: welcomeHeight 
-        };
-
-        ctx.font = DEFAULT_FONT;
-        const idMetrics = ctx.measureText(ID_TEXT);
-        const boxPaddingX = 20;
-        const boxPaddingY = 10;
-        const boxWidth = idMetrics.width + boxPaddingX * 2;
-        const boxHeight = 28 + boxPaddingY * 2;
-        const idBoxBounds = {
-            x: state.idBoxX - boxWidth / 2,
-            y: state.idBoxY - boxHeight / 2,
-            width: boxWidth,
-            height: boxHeight
-        };
-
-        return { welcome: welcomeBounds, idbox: idBoxBounds, userAvatar: userAvatarBounds, groupAvatar: groupAvatarBounds };
-    }
-
-    function hitTest(x, y, bounds) {
-        return x >= bounds.x && x <= bounds.x + bounds.width &&
-               y >= bounds.y && y <= bounds.y + bounds.height;
-    }
-
-    function hitTestCircle(x, y, circleBounds) {
-        const dx = x - circleBounds.x;
-        const dy = y - circleBounds.y;
-        return (dx * dx + dy * dy) <= (circleBounds.radius * circleBounds.radius);
-    }
-
-    function startDrag(e) {
-        if (!isMoveModeActive) {
-            if (e.touches) { e.preventDefault(); }
-            return; 
-        }
-
-        e.preventDefault(); 
-        
-        const pos = getMousePos(e);
-        const bounds = getElementBounds(ctx, getCurrentConfig()); 
-
-        if (hitTest(pos.x, pos.y, bounds.idbox)) {
-            draggedElement = 'idBox';
-            dragOffsetX = pos.x - state.idBoxX;
-            dragOffsetY = pos.y - state.idBoxY;
-        } else if (hitTest(pos.x, pos.y, bounds.welcome)) {
-            draggedElement = 'welcomeText';
-            dragOffsetX = pos.x - state.welcomeX;
-            dragOffsetY = pos.y - state.welcomeY;
-        } 
-        else if (hitTestCircle(pos.x, pos.y, bounds.userAvatar)) {
-            draggedElement = 'userAvatar';
-            dragOffsetX = pos.x - state.userX;
-            dragOffsetY = pos.y - state.userY;
-        } 
-        else if (hitTestCircle(pos.x, pos.y, bounds.groupAvatar)) {
-            draggedElement = 'groupAvatar';
-            dragOffsetX = pos.x - state.groupX;
-            dragOffsetY = pos.y - state.groupY;
-        } else {
-            draggedElement = null;
-            return;
-        }
-
-        isDragging = true;
-        canvas.classList.add('dragging');
-    }
-
-    // 🟢 FUNÇÃO DRAG COM SMART GUIDES
-    function drag(e) {
-        if (!isDragging) return;
-        e.preventDefault();
-
-        const pos = getMousePos(e);
-        let newX = pos.x - dragOffsetX;
-        let newY = pos.y - dragOffsetY;
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-
-        activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
-
-        // 1. Aplicar alinhamento ao centro do Canvas
-        if (Math.abs(newX - CANVAS_CENTER_X) < ALIGN_TOLERANCE) {
-            newX = CANVAS_CENTER_X;
-            activeGuides.centerX = true;
-        }
-        if (Math.abs(newY - CANVAS_CENTER_Y) < ALIGN_TOLERANCE) {
-            newY = CANVAS_CENTER_Y;
-            activeGuides.centerY = true;
-        }
-
-        // 2. Aplicar alinhamento a outros elementos
-        const allElements = ['userAvatar', 'groupAvatar', 'welcomeText', 'idBox'];
-        const otherElements = allElements.filter(el => el !== draggedElement);
-        const currentConfig = getCurrentConfig();
-
-        const elementCenters = {
-            userAvatar: { x: currentConfig.userX, y: currentConfig.userY },
-            groupAvatar: { x: currentConfig.groupX, y: currentConfig.groupY },
-            welcomeText: { x: currentConfig.welcomeX, y: currentConfig.welcomeY },
-            idBox: { x: currentConfig.idBoxX, y: currentConfig.idBoxY }
-        };
-
-        for (const otherElement of otherElements) {
-            const targetX = elementCenters[otherElement].x;
-            const targetY = elementCenters[otherElement].y;
-
-            if (Math.abs(newY - targetY) < ALIGN_TOLERANCE) {
-                newY = targetY;
-                activeGuides.alignY = targetY;
-            }
-
-            if (Math.abs(newX - targetX) < ALIGN_TOLERANCE) {
-                newX = targetX;
-                activeGuides.alignX = targetX;
-            }
-        }
-        
-        // 3. Atualizar o estado do elemento arrastado
-        switch (draggedElement) {
-            case 'userAvatar':
-                state.userX = Math.max(50, Math.min(canvasWidth - 50, newX));
-                state.userY = Math.max(50, Math.min(canvasHeight - 50, newY));
-                updateRangeFromState('userX', state.userX);
-                updateRangeFromState('userY', state.userY);
-                break;
-            case 'groupAvatar':
-                state.groupX = Math.max(20, Math.min(canvasWidth - 20, newX));
-                state.groupY = Math.max(20, Math.min(canvasHeight - 20, newY));
-                updateRangeFromState('groupX', state.groupX);
-                updateRangeFromState('groupY', state.groupY);
-                break;
-            case 'welcomeText':
-                state.welcomeX = Math.max(0, Math.min(canvasWidth, newX));
-                state.welcomeY = Math.max(0, Math.min(canvasHeight, newY));
-                break;
-            case 'idBox':
-                state.idBoxX = Math.max(0, Math.min(canvasWidth, newX));
-                state.idBoxY = Math.max(0, Math.min(canvasHeight, newY));
-                break;
-        }
-
-        updateCanvas();
-    }
-
-    function endDrag(e) {
-        if (isDragging) {
-            isDragging = false;
-            draggedElement = null;
-            canvas.classList.remove('dragging');
-            activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null }; 
-            updateCanvas(); 
-        }
-    }
-    
-    // Event Listeners para Desktop e Mobile
-    canvas.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', endDrag);
-    canvas.addEventListener('touchstart', startDrag, { passive: false });
-    window.addEventListener('touchmove', drag, { passive: false });
-    window.addEventListener('touchend', endDrag);
-    
-    // --- FUNÇÕES DE GUIAS E MODO MOVER ---
-    
-    function drawSmartGuides() {
-        if (!isDragging || !isMoveModeActive) return;
-
-        ctx.save();
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-
-        // Guia Central Vertical do Canvas (Amarelo)
-        if (activeGuides.centerX) {
-            ctx.strokeStyle = '#FFD900';
-            ctx.beginPath();
-            ctx.moveTo(CANVAS_CENTER_X, 0);
-            ctx.lineTo(CANVAS_CENTER_X, canvas.height);
-            ctx.stroke();
-        }
-
-        // Guia Central Horizontal do Canvas (Amarelo)
-        if (activeGuides.centerY) {
-            ctx.strokeStyle = '#FFD900';
-            ctx.beginPath();
-            ctx.moveTo(0, CANVAS_CENTER_Y);
-            ctx.lineTo(canvas.width, CANVAS_CENTER_Y);
-            ctx.stroke();
-        }
-
-        // Guia de Alinhamento entre elementos (Verde)
-        if (activeGuides.alignX !== null) {
-            ctx.strokeStyle = '#00B09C';
-            ctx.beginPath();
-            ctx.moveTo(activeGuides.alignX, 0);
-            ctx.lineTo(activeGuides.alignX, canvas.height);
-            ctx.stroke();
-        }
-
-        if (activeGuides.alignY !== null) {
-            ctx.strokeStyle = '#00B09C';
-            ctx.beginPath();
-            ctx.moveTo(0, activeGuides.alignY);
-            ctx.lineTo(canvas.width, activeGuides.alignY);
-            ctx.stroke();
-        }
-
-        ctx.restore();
-    }
-    
-    function toggleMoveMode() {
-        isMoveModeActive = !isMoveModeActive;
-        const button = document.getElementById('toggleMoveModeButton');
-        
-        if (isMoveModeActive) {
-            button.textContent = 'Desativar Modo Arrasto';
-            button.style.backgroundColor = '#8419F7'; 
-            button.style.color = '#101D25';
-            canvas.classList.add('canvas-draggable');
-            canvas.style.cursor = 'grab'; 
-        } else {
-            button.textContent = 'Ativar Modo Arrasto';
-            button.style.backgroundColor = '#374151'; 
-            button.style.color = '#E9EDEF';
-            canvas.classList.remove('canvas-draggable');
-            canvas.style.cursor = 'default'; 
-            activeGuides = { centerX: false, centerY: false, alignX: null, alignY: null };
-            updateCanvas();
-        }
-    }
-    
-    // --- FUNÇÃO PRINCIPAL DE DESENHO ---
-    
-    async function drawWelcomeCanvas(config) {
-        const userPicUrl = document.getElementById('userPicUrlInput').value;
-        const groupPicUrl = document.getElementById('groupPicUrlInput').value;
-
-        const { bgUrl, bgColor, userRadius, groupRadius } = config;
-
-        const userX = state.userX, userY = state.userY, groupX = state.groupX, groupY = state.groupY,
-             welcomeX = state.welcomeX, welcomeY = state.welcomeY, idBoxX = state.idBoxX, idBoxY = state.idBoxY;
-
-        const WELCOME_TEXT = document.getElementById('welcomeTextInput').value;
-        const WELCOME_COLOR = document.getElementById('welcomeColorInput').value;
-        const GROUP_NAME_COLOR = document.getElementById('groupNameColorInput').value;
-        const ID_BOX_COLOR_BASE = document.getElementById('idBoxColorInput').value;
-        const ID_BOX_COLOR = ID_BOX_COLOR_BASE + "E6"; // 90% opacidade
-
-        const WELCOME_FONT = getWelcomeFont();
-
-        const canvasWidth = canvas.width; const canvasHeight = canvas.height;
-
-        /* 🎨 MUDANÇA APLICADA AQUI: Carregamento da fonte com o novo nome */
-        try { await document.fonts.load(`800 100px TTRunsTrialExtraBold`); } catch (err) { /* Falha silenciosa */ }
-
-        // Carregamento de Imagens
-        const [bgImage, userPicData, groupPicData] = await Promise.all([
-            loadImageAsync(bgUrl), loadImageAsync(userPicUrl), loadImageAsync(groupPicUrl)
-        ]);
-
-        // 1. Fundo
-        if (bgImage) {
-            const imgWidth = bgImage.width, imgHeight = bgImage.height;
-            const canvasRatio = canvasWidth / canvasHeight, imgRatio = imgWidth / imgHeight;
-            let drawW, drawH, offsetX, offsetY;
-            if (imgRatio > canvasRatio) {
-                drawH = canvasHeight;
-                drawW = imgWidth * (canvasHeight / imgHeight);
-                offsetX = (canvasWidth - drawW) / 2; offsetY = 0;
-            } else {
-                drawW = canvasWidth;
-                drawH = imgHeight * (canvasWidth / imgWidth);
-                offsetX = 0; offsetY = (canvasHeight - drawH) / 2;
-            }
-            ctx.drawImage(bgImage, offsetX, offsetY, drawW, drawH);
-        } else {
-            ctx.fillStyle = bgColor; ctx.fillRect(0,0,canvasWidth,canvasHeight);
-        }
-
-        // Desenho de detalhes abstratos
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.beginPath();
-        ctx.arc(canvasWidth * 0.1, canvasHeight * 0.9, 100, 0, Math.PI * 2);
-        ctx.arc(canvasWidth * 0.9, canvasHeight * 0.1, 70, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 2. Fotos de Perfil
-        drawCircularImage(ctx, userX, userY, userRadius, userPicData, USER_FALLBACK_COLOR);
-        drawCircularImage(ctx, groupX, groupY, groupRadius, groupPicData, GROUP_FALLBACK_COLOR);
-
-        // 3. Nome do Grupo (Fixo)
-        const X_GROUP_NAME = groupX + groupRadius + 15;
-        const Y_GROUP_NAME = groupY + 10;
-        ctx.font = 'bold 30px Inter, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillStyle = GROUP_NAME_COLOR;
-        ctx.fillText(FIXED_GROUP_NAME, X_GROUP_NAME, Y_GROUP_NAME);
-
-        // 4. Texto de Boas-Vindas (Arrastável)
-        ctx.font = WELCOME_FONT;
-        ctx.textAlign = 'center';
-        ctx.fillStyle = WELCOME_COLOR;
-        ctx.fillText(WELCOME_TEXT, welcomeX, welcomeY);
-
-        // 5. Box de ID (Arrastável)
-        const ID_TEXT = FIXED_USER_NAME;
-        ctx.font = DEFAULT_FONT;
-        const textMetrics = ctx.measureText(ID_TEXT);
-        const boxPaddingX = 20, boxPaddingY = 10;
-        const boxWidth = textMetrics.width + boxPaddingX * 2;
-        const boxHeight = 28 + boxPaddingY * 2;
-        const boxX = idBoxX - boxWidth / 2, boxY = idBoxY - boxHeight / 2;
-        const borderRadius = 8;
-
-        ctx.fillStyle = ID_BOX_COLOR;
-        ctx.beginPath();
-        ctx.moveTo(boxX + borderRadius, boxY);
-        ctx.lineTo(boxX + boxWidth - borderRadius, boxY);
-        ctx.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + borderRadius, borderRadius);
-        ctx.lineTo(boxX + boxWidth, boxY + boxHeight - borderRadius);
-        ctx.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - borderRadius, boxY + boxHeight, borderRadius);
-        ctx.lineTo(boxX + borderRadius, boxY + boxHeight);
-        ctx.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - borderRadius, borderRadius);
-        ctx.lineTo(boxX, boxY + borderRadius);
-        ctx.arcTo(boxX, boxY, boxX + borderRadius, boxY, borderRadius);
-        ctx.fill();
-
-        const textBaselineY = idBoxY + (28 / 2) - 2;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.font = DEFAULT_FONT;
-        ctx.fillText(ID_TEXT, idBoxX, textBaselineY);
-
-        // Desenha as guias inteligentes POR CIMA
-        drawSmartGuides();
-    }
-    
-    // --- FUNÇÕES DE CONFIGURAÇÃO E SINCRONIZAÇÃO ---
-
-    function getCurrentConfig() {
-        return {
-            bgUrl: document.getElementById('bgUrlInput').value,
-            bgColor: document.getElementById('bgColorInput').value,
-            welcomeText: document.getElementById('welcomeTextInput').value,
-            welcomeColor: document.getElementById('welcomeColorInput').value,
-            groupNameColor: document.getElementById('groupNameColorInput').value,
-            idBoxColor: document.getElementById('idBoxColorInput').value,
-            userRadius: parseInt(document.getElementById('userRadius').value),
-            groupRadius: parseInt(document.getElementById('groupRadius').value),
-            welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value),
-            userX: Math.round(state.userX),
-            userY: Math.round(state.userY),
-            groupX: Math.round(state.groupX),
-            groupY: Math.round(state.groupY),
-            welcomeX: Math.round(state.welcomeX),
-            welcomeY: Math.round(state.welcomeY),
-            idBoxX: Math.round(state.idBoxX),
-            idBoxY: Math.round(state.idBoxY),
-        };
-    }
-
-    function updateRangeFromState(id, value) {
-        const input = document.getElementById(id);
-        const valueSpan = document.getElementById(id + 'Value');
-        if (input && valueSpan) {
-            input.value = Math.round(value);
-            valueSpan.textContent = Math.round(value);
-        }
-    }
-    
-    function updateCanvas() {
-        // Sincronizar sliders com spans
-        ['userRadius', 'groupRadius', 'welcomeFontSize'].forEach(id => {
-            document.getElementById(id + 'Value').textContent = document.getElementById(id).value;
-        });
-        
-        // Sincronizar cor picker com hex input
-        const bgColorInput = document.getElementById('bgColorInput');
-        document.getElementById('bgColorHex').value = bgColorInput.value;
-
-        // Sincronizar posições arrastáveis
-        document.getElementById('welcomeXValue').textContent = Math.round(state.welcomeX);
-        document.getElementById('welcomeYValue').textContent = Math.round(state.welcomeY);
-        document.getElementById('idBoxXValue').textContent = Math.round(state.idBoxX);
-        document.getElementById('idBoxYValue').textContent = Math.round(state.idBoxY);
-        
-        // Atualizar canvas
-        drawWelcomeCanvas(getCurrentConfig());
-
-        // Atualizar resumo (se o painel estiver ativo)
-        if (document.getElementById('panel-summary').classList.contains('active')) {
-            updateSummary();
-        }
-    }
-
-    function updateSummary() {
-        const config = getCurrentConfig();
-        const summary = `
-            <div class="summary-item"><span>Fundo URL:</span> <span>${config.bgUrl}</span></div>
-            <div class="summary-item"><span>Fundo Cor:</span> <span>${config.bgColor}</span></div>
-            <div class="summary-item"><span>Texto Boas-Vindas:</span> <span>${config.welcomeText}</span></div>
-            <div class="summary-item"><span>Cor Welcome:</span> <span>${config.welcomeColor}</span></div>
-            <div class="summary-item"><span>Cor Nome Grupo:</span> <span>${config.groupNameColor}</span></div>
-            <div class="summary-item"><span>Cor Box ID:</span> <span>${config.idBoxColor}</span></div>
-            <div class="summary-item"><span>Raio Usuário:</span> <span>${config.userRadius}px</span></div>
-            <div class="summary-item"><span>Raio Grupo:</span> <span>${config.groupRadius}px</span></div>
-            <div class="summary-item"><span>Tamanho Fonte:</span> <span>${config.welcomeFontSize}px</span></div>
-            <hr class="border-gray-700 my-2">
-            <div class="summary-item"><span>Posição User (X, Y):</span> <span>${config.userX}, ${config.userY}</span></div>
-            <div class="summary-item"><span>Posição Group (X, Y):</span> <span>${config.groupX}, ${config.groupY}</span></div>
-            <div class="summary-item"><span>Posição Welcome (X, Y):</span> <span>${config.welcomeX}, ${config.welcomeY}</span></div>
-            <div class="summary-item"><span>Posição ID Box (X, Y):</span> <span>${config.idBoxX}, ${config.idBoxY}</span></div>
-        `;
-        document.getElementById('summary-content').innerHTML = summary;
-    }
-
-    // 🌟 NOVA FUNÇÃO: Copia a configuração como Base64
-    function copyConfigAsBase64() {
-        const config = getCurrentConfig();
-        
-        // 1. Converte o objeto config em uma string JSON minificada
-        const jsonString = JSON.stringify(config); 
-        
-        // 2. Codifica a string JSON para Base64 (btoa)
-        try {
-            const base64String = btoa(jsonString);
+            const userImg = await loadImageAsync("https://i.ibb.co/N6nNsRYf/lua.gif");
+            const groupImg = await loadImageAsync("https://i.ibb.co/PsV0zCTw/si.jpg");
             
-            // 3. Copia a string Base64 para a área de transferência
-            navigator.clipboard.writeText(base64String).then(() => {
-                alert('Configuração codificada em Base64 copiada para a área de transferência!');
-            }).catch(err => {
-                console.error('Falha ao copiar Base64:', err);
-                alert('Falha ao copiar o Base64. Veja o console para detalhes.');
+            drawCircularImage(ctx, state.userX, state.userY, config.userRadius, userImg, '#43B581');
+            drawCircularImage(ctx, state.groupX, state.groupY, config.groupRadius, groupImg, '#ED4245');
+
+            ctx.font = `800 ${config.welcomeFontSize}px TTRunsTrialExtraBold, Inter, sans-serif`;
+            ctx.fillStyle = config.welcomeColor;
+            ctx.textAlign = 'center';
+            ctx.fillText(config.welcomeText, state.welcomeX, state.welcomeY);
+
+            ctx.font = '24px Inter, sans-serif';
+            const metrics = ctx.measureText(FIXED_USER_NAME);
+            const boxW = metrics.width + 40, boxH = 40;
+            ctx.fillStyle = config.idBoxColor;
+            roundRect(ctx, state.idBoxX - boxW/2, state.idBoxY - boxH/2, boxW, boxH, 20, true);
+            ctx.fillStyle = config.groupNameColor;
+            ctx.textBaseline = 'middle';
+            ctx.fillText(FIXED_USER_NAME, state.idBoxX, state.idBoxY + 2);
+
+            drawAlignmentGuides();
+
+            document.getElementById('userRadiusValue').innerText = config.userRadius;
+            document.getElementById('groupRadiusValue').innerText = config.groupRadius;
+            document.getElementById('welcomeFontSizeValue').innerText = config.welcomeFontSize;
+            document.getElementById('userXValue').innerText = Math.round(state.userX);
+            document.getElementById('userYValue').innerText = Math.round(state.userY);
+            document.getElementById('welcomeXValue').innerText = Math.round(state.welcomeX);
+            document.getElementById('welcomeYValue').innerText = Math.round(state.welcomeY);
+            
+            updateSummary(config);
+        }
+
+        function generateFinalData(config) {
+            return {
+                bgUrl: config.bgUrl, bgColor: config.bgColor, welcomeText: config.welcomeText,
+                welcomeColor: config.welcomeColor, groupNameColor: config.groupNameColor,
+                idBoxColor: config.idBoxColor, userRadius: config.userRadius, groupRadius: config.groupRadius,
+                welcomeFontSize: config.welcomeFontSize, userX: Math.round(state.userX), userY: Math.round(state.userY),
+                groupX: Math.round(state.groupX), groupY: Math.round(state.groupY),
+                welcomeX: Math.round(state.welcomeX), welcomeY: Math.round(state.welcomeY),
+                idBoxX: Math.round(state.idBoxX), idBoxY: Math.round(state.idBoxY)
+            };
+        }
+
+        function updateSummary(config) {
+            const data = generateFinalData(config);
+            document.getElementById('summary-content').innerText = JSON.stringify(data);
+        }
+
+        function copyConfigAsBase64() {
+            const config = {
+                bgUrl: document.getElementById('bgUrlInput').value,
+                bgColor: document.getElementById('bgColorInput').value,
+                idBoxColor: document.getElementById('idBoxColorInput').value,
+                welcomeText: document.getElementById('welcomeTextInput').value,
+                welcomeColor: document.getElementById('welcomeColorInput').value,
+                groupNameColor: document.getElementById('groupNameColorInput').value,
+                userRadius: parseInt(document.getElementById('userRadius').value),
+                groupRadius: parseInt(document.getElementById('groupRadius').value),
+                welcomeFontSize: parseInt(document.getElementById('welcomeFontSize').value)
+            };
+            const data = generateFinalData(config);
+            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            navigator.clipboard.writeText(b64);
+            alert("Modelo Original Copiado! 🚀");
+        }
+
+        function drawCircularImage(ctx, x, y, r, img, fallback) {
+            ctx.save();
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
+            if (img) {
+                const scale = Math.max(r * 2 / img.width, r * 2 / img.height);
+                const width = img.width * scale; const height = img.height * scale;
+                ctx.drawImage(img, x - width / 2, y - height / 2, width, height);
+            } else { ctx.fillStyle = fallback; ctx.fill(); }
+            ctx.restore();
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        function loadImageAsync(url) {
+            if (!url || url === 'false') return Promise.resolve(null);
+            if (imageCache.has(url)) return Promise.resolve(imageCache.get(url));
+            return new Promise(res => {
+                const img = new Image(); img.crossOrigin = 'Anonymous';
+                img.onload = () => { imageCache.set(url, img); res(img); };
+                img.onerror = () => res(null);
+                img.src = url;
             });
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill) {
+            ctx.beginPath(); ctx.roundRect(x, y, width, height, radius); ctx.closePath();
+            if (fill) ctx.fill();
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (cx - rect.left) * (900 / rect.width), y: (cy - rect.top) * (350 / rect.height) };
+        }
+
+        canvas.onmousedown = (e) => {
+            if(!state.isMoveModeActive) return;
+            const pos = getMousePos(e);
+            if(Math.hypot(pos.x - state.userX, pos.y - state.userY) < 60) draggedElement = 'user';
+            else if(Math.hypot(pos.x - state.groupX, pos.y - state.groupY) < 40) draggedElement = 'group';
+            else if(Math.abs(pos.y - state.welcomeY) < 40) draggedElement = 'welcome';
+            else if(Math.abs(pos.y - state.idBoxY) < 30) draggedElement = 'idBox';
+            if(draggedElement) isDragging = true;
+        };
+
+        window.onmousemove = (e) => {
+            if(!isDragging) return;
+            const pos = getMousePos(e);
+            let nx = pos.x, ny = pos.y;
             
-        } catch (e) {
-            console.error('Erro de Codificação Base64:', e);
-            alert('Erro ao codificar a configuração em Base64.');
-        }
-    }
-    
-    // Função original de cópia JSON (mantida por compatibilidade e utilidade)
-    function copyConfigAsJson() {
-        const config = getCurrentConfig();
-        
-        // JSON minificado (linha única)
-        const jsonConfig = JSON.stringify(config); 
-        
-        navigator.clipboard.writeText(jsonConfig).then(() => {
-            alert('JSON da configuração copiado para a área de transferência! (Formato de linha única)');
-        }).catch(err => {
-            console.error('Falha ao copiar:', err);
-            alert('Falha ao copiar. Veja o console para detalhes.');
-        });
-    }
+            activeGuides = { x: null, y: null };
+            const SNAP_DISTANCE = 10;
 
-    function exportConfigAsJson() {
-        const config = getCurrentConfig();
-        
-        // O terceiro argumento é '2' para formatação legível (para o arquivo)
-        const jsonConfig = JSON.stringify(config, null, 2); 
-        
-        const blob = new Blob([jsonConfig], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'welcome_card_config.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-    
-    function onPanelChange() {
-        const selectedPanelId = document.getElementById('panelSelect').value;
-        document.querySelectorAll('.panel').forEach(panel => {
-            panel.classList.remove('active');
-        });
-        document.getElementById(selectedPanelId).classList.add('active');
-        localStorage.setItem(STORAGE_SELECTED_PANEL_KEY, selectedPanelId);
-        
-        if (selectedPanelId === 'panel-summary') {
-            updateSummary();
-        }
-    }
-    
-    function loadSavedPanel() {
-        const savedPanelId = localStorage.getItem(STORAGE_SELECTED_PANEL_KEY);
-        if (savedPanelId && document.getElementById(savedPanelId)) {
-            document.getElementById('panelSelect').value = savedPanelId;
-            onPanelChange();
-        } else {
-            document.getElementById('panel-background').classList.add('active');
-        }
-    }
+            if(Math.abs(nx - CANVAS_CENTER_X) < SNAP_DISTANCE) { nx = CANVAS_CENTER_X; activeGuides.x = CANVAS_CENTER_X; }
+            if(Math.abs(ny - CANVAS_CENTER_Y) < SNAP_DISTANCE) { ny = CANVAS_CENTER_Y; activeGuides.y = CANVAS_CENTER_Y; }
 
-    // Inicialização
-    window.onload = () => {
-        initializeState();
-        loadSavedPanel();
-        updateCanvas();
-        
-        // Sincronizar ranges com spans no carregamento
-        ['userRadius', 'groupRadius', 'userX', 'userY', 'groupX', 'groupY', 'welcomeFontSize'].forEach(id => {
-             document.getElementById(id).oninput();
-        });
-        
-        // Sincronizar cor hex com color picker
-        document.getElementById('bgColorInput').addEventListener('input', () => {
-            document.getElementById('bgColorHex').value = document.getElementById('bgColorInput').value.toUpperCase();
-            updateCanvas();
-        });
-        document.getElementById('welcomeColorInput').addEventListener('input', () => {
-            document.getElementById('welcomeColorHex').value = document.getElementById('welcomeColorInput').value.toUpperCase();
-            updateCanvas();
-        });
-        document.getElementById('groupNameColorInput').addEventListener('input', () => {
-            document.getElementById('groupNameColorHex').value = document.getElementById('groupNameColorInput').value.toUpperCase();
-            updateCanvas();
-        });
-        document.getElementById('idBoxColorInput').addEventListener('input', () => {
-            document.getElementById('idBoxColorHex').value = document.getElementById('idBoxColorInput').value.toUpperCase();
-            updateCanvas();
-        });
+            const otherElements = [
+                {x: state.userX, y: state.userY, id: 'user'},
+                {x: state.groupX, y: state.groupY, id: 'group'},
+                {x: state.welcomeX, y: state.welcomeY, id: 'welcome'},
+                {x: state.idBoxX, y: state.idBoxY, id: 'idBox'}
+            ].filter(el => el.id !== draggedElement);
 
-    };
-</script>
+            otherElements.forEach(el => {
+                if(Math.abs(nx - el.x) < SNAP_DISTANCE) { nx = el.x; activeGuides.x = el.x; }
+                if(Math.abs(ny - el.y) < SNAP_DISTANCE) { ny = el.y; activeGuides.y = el.y; }
+            });
+
+            if(draggedElement === 'user') { state.userX = nx; state.userY = ny; }
+            else if(draggedElement === 'group') { state.groupX = nx; state.groupY = ny; }
+            else if(draggedElement === 'welcome') { state.welcomeX = nx; state.welcomeY = ny; }
+            else if(draggedElement === 'idBox') { state.idBoxX = nx; state.idBoxY = ny; }
+            
+            updateCanvas();
+        };
+
+        window.onmouseup = () => { isDragging = false; draggedElement = null; activeGuides = { x: null, y: null }; updateCanvas(); };
+
+        window.onload = () => {
+            updateCanvas();
+            const imgs = ["https://i.ibb.co/pBN6NM9h/Isis2.png", "https://i.ibb.co/Gf4fBpqc/Isis.png", "https://i.ibb.co/JjzFfXx9/Isis1.png"];
+            let i = 0; setInterval(() => { i = (i + 1) % imgs.length; document.getElementById('carousel-img').src = imgs[i]; }, 4000);
+        };
+    </script>
 </body>
 </html>
