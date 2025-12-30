@@ -185,7 +185,17 @@
                 </div>
 
                 <div id="panel-positions" class="panel">
-                    <p class="text-xs text-gray-400 mb-4 italic">Arraste os elementos no canvas para ajustar a posição.</p>
+                    <div id="tutorial" class="space-y-4"></div>
+                    <script>
+                        const steps = [
+                            { img: "https://i.ibb.co/MDD6X7kG/fgfg3.png", text: "1️⃣ Após concluir a personalização do seu card, é necessário realizar o último passo: exportar o modelo no grupo do WhatsApp onde o bot utilizará esse layout." },
+                            { img: "https://i.ibb.co/k2VScng3/fgfg.png", text: "2️⃣ Utilize o comando $card no grupo desejado. Observe que o bot aplicará o layout exatamente no grupo onde o comando for executado." },
+                            { img: "https://i.ibb.co/tTz8DqqT/fgfg2.png", text: "3️⃣ Após digitar o comando $card, não o envie imediatamente. Em seguida, adicione o código copiado no botão “Finalizar”, ficando no formato $card código_copiado (sem utilizar parênteses)." },
+                            ];
+                            document.getElementById("tutorial").innerHTML = steps.map(s => `
+                             <div>
+                                <img src="${s.img}" class="w-full max-h-[350px] object-cover rounded-xl mb-3 opacity-90" style="aspect-ratio:900/200"><p style="--hint-color:#c9dac3" class="text-xs italic pl-3 border-l-2 text-[color:var(--hint-color)] border-[color:var(--hint-color)]">${s.text}</p></div>`).join("");
+                    </script>
                     <button onclick="switchTab('panel-summary', this)" class="w-full py-3 bg-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-500 transition shadow-lg">Finalizar e Exportar</button>
                 </div>
 
@@ -201,7 +211,7 @@
                         </div>
                         <div id="carousel-track" class="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]">
                             <div class="min-w-full h-full relative">
-                                <img src="https://i.ibb.co/NgvM5L3P/ggmaz.png" class="w-full h-full object-cover">
+                                <img src="https://i.ibb.co/6R3KYnxH/fgfg4.png" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-[#0a0f18] via-transparent to-transparent"></div>
                                 <div class="absolute bottom-0 inset-x-0 p-4">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600 text-white mb-1 inline-block">01</span>
@@ -219,7 +229,7 @@
                                 </div>
                             </div>
                             <div class="min-w-full h-full relative">
-                                <img src="https://i.ibb.co/NgvM5L3P/ggmaz.png" class="w-full h-full object-cover">
+                                <img src="https://i.ibb.co/nyVstPx/fgfg5.png" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-gradient-to-t from-[#0a0f18] via-transparent to-transparent"></div>
                                 <div class="absolute bottom-0 inset-x-0 p-4">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-600 text-white mb-1 inline-block">03</span>
@@ -304,7 +314,7 @@
                             <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition">🚀</div>
                             <div class="flex-1 text-left">
                                 <h5 class="text-xs font-bold text-gray-200">Exportação</h5>
-                                <p class="text-[9px] text-gray-500">Código otimizado em base64.</p>
+                                <p class="text-[9px] text-gray-500">Código otimizado para copiar e colar usando o comando /card.</p>
                             </div>
                         </div>
                     </div>
